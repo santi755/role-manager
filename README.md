@@ -2,6 +2,19 @@
 
 Sistema de control de acceso basado en roles (RBAC) implementado con teoría de grafos en arquitectura hexagonal.
 
+## 📚 Documentación
+
+> **¿No entiendes grafos, DDD o arquitectura hexagonal?** 👉 Lee **[CONCEPTOS.md](CONCEPTOS.md)** primero
+> 
+> Esta guía completa explica TODOS los conceptos desde cero con diagramas visuales y ejemplos prácticos.
+
+### Documentos Disponibles
+
+- 📖 **[CONCEPTOS.md](CONCEPTOS.md)** - Guía completa de conceptos (⭐ **EMPIEZA AQUÍ** si eres nuevo)
+- 📘 **[README.md](README.md)** - Documentación técnica del proyecto (este archivo)
+- 🗄️ **[MONGODB.md](MONGODB.md)** - Guía de integración con MongoDB
+- 📂 **[docs/](docs/)** - Carpeta con diagramas e índice de documentación
+
 ## 🎯 Características
 
 - **Arquitectura Hexagonal**: Separación clara entre dominio, aplicación e infraestructura
