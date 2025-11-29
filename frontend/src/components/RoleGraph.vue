@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import dagre from 'dagre'
 import { VueFlow, useVueFlow, type Connection } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -33,9 +34,9 @@ const fetchRoles = async () => {
     const roles: Role[] = await response.json()
     
     // Transform roles to nodes
-    nodes.value = roles.map((role, index) => ({
+    let newNodes = roles.map((role) => ({
       id: role.id,
-      position: { x: 100 + (index * 200) % 800, y: 100 + Math.floor(index / 4) * 100 },
+      position: { x: 0, y: 0 }, // Initial position, will be set by dagre
       data: { label: role.name, description: role.description },
       type: 'default',
     }))
@@ -53,6 +54,31 @@ const fetchRoles = async () => {
         })
       })
     })
+    
+    // Apply Dagre Layout
+    const dagreGraph = new dagre.graphlib.Graph()
+    dagreGraph.setDefaultEdgeLabel(() => ({}))
+    dagreGraph.setGraph({ rankdir: 'TB' })
+
+    newNodes.forEach((node) => {
+      dagreGraph.setNode(node.id, { width: 150, height: 50 })
+    })
+
+    newEdges.forEach((edge) => {
+      dagreGraph.setEdge(edge.source, edge.target)
+    })
+
+    dagre.layout(dagreGraph)
+
+    newNodes = newNodes.map((node) => {
+      const nodeWithPosition = dagreGraph.node(node.id)
+      return {
+        ...node,
+        position: { x: nodeWithPosition.x - 75, y: nodeWithPosition.y - 25 }, // Center anchor
+      }
+    })
+
+    nodes.value = newNodes
     edges.value = newEdges
     
     setTimeout(() => {
