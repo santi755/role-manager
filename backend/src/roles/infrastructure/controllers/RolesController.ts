@@ -18,6 +18,7 @@ import { GrantPermissionToRole } from '../../application/use-cases/GrantPermissi
 import { RevokePermissionFromRole } from '../../application/use-cases/RevokePermissionFromRole';
 import { SetRoleParent } from '../../application/use-cases/SetRoleParent';
 import { RemoveRoleParent } from '../../application/use-cases/RemoveRoleParent';
+import { DeleteRole } from '../../application/use-cases/DeleteRole';
 import { CreateRoleDto } from '../../application/dto/CreateRoleDto';
 import { GrantPermissionDto } from '../../application/dto/GrantPermissionDto';
 import { SetRoleParentDto } from '../../application/dto/SetRoleParentDto';
@@ -37,6 +38,7 @@ export class RolesController {
         private readonly revokePermissionFromRole: RevokePermissionFromRole,
         private readonly setRoleParent: SetRoleParent,
         private readonly removeRoleParent: RemoveRoleParent,
+        private readonly deleteRole: DeleteRole,
     ) { }
 
     @Post()
@@ -122,5 +124,11 @@ export class RolesController {
             roleId: id,
             parentRoleId: parentId,
         });
+    }
+
+    @Delete(':id')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async remove(@Param('id') id: string): Promise<void> {
+        await this.deleteRole.execute({ roleId: id });
     }
 }

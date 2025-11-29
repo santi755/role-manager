@@ -14,6 +14,7 @@ import { GetAllPermissions } from './application/use-cases/GetAllPermissions';
 import { GetPermissionById } from './application/use-cases/GetPermissionById';
 import { RevokePermissionFromRole } from './application/use-cases/RevokePermissionFromRole';
 import { RemoveRoleParent } from './application/use-cases/RemoveRoleParent';
+import { DeleteRole } from './application/use-cases/DeleteRole';
 import { MongoRoleRepository } from './infrastructure/repositories/MongoRoleRepository';
 import { MongoPermissionRepository } from './infrastructure/repositories/MongoPermissionRepository';
 import { RoleDocument, RoleSchema } from './infrastructure/schemas/role.schema';
@@ -54,6 +55,7 @@ import { PermissionsController } from './infrastructure/controllers/PermissionsC
         GrantPermissionToRole,
         RevokePermissionFromRole,
         RemoveRoleParent,
+        DeleteRole,
 
         // Query Use Cases
         GetAllRoles,
@@ -74,6 +76,7 @@ import { PermissionsController } from './infrastructure/controllers/PermissionsC
         GrantPermissionToRole,
         RevokePermissionFromRole,
         RemoveRoleParent,
+        DeleteRole,
         GetAllRoles,
         GetRoleById,
         GetRolePermissions,

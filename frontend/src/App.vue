@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import HealthChecker from '@/components/HealthChecker.vue'
+import RoleGraph from '@/components/RoleGraph.vue'
 </script>
 
 <template>
   <div id="app">
-    <h1>Role Manager Frontend</h1>
-    <HealthChecker />
+    <RoleGraph />
   </div>
 </template>
 
