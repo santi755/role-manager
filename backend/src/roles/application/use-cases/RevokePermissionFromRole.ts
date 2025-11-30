@@ -25,7 +25,7 @@ export class RevokePermissionFromRole {
         }
 
         // Check if role has this permission
-        if (!role.getPermissions().has(permissionId)) {
+        if (!role.hasPermission(permissionId)) {
             throw new Error(
                 `Role does not have permission ${command.permissionId}`,
             );

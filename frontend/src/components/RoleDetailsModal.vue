@@ -2,7 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 
 const props = defineProps<{
-  role: { id: string, name: string, description: string } | null
+  role: { id: string; name: string; description: string; permissions: string[] } | null
   isOpen: boolean
 }>()
 
@@ -41,7 +41,7 @@ const addPermission = async () => {
     const response = await fetch(`http://localhost:3000/api/roles/${props.role.id}/permissions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ permissionId: selectedPermission.value })
+      body: JSON.stringify({ permissionId: selectedPermission.value }),
     })
     if (response.ok) {
       await fetchRolePermissions()
@@ -54,27 +54,30 @@ const addPermission = async () => {
 }
 
 const removePermission = async (permissionId: string) => {
-    if (!props.role) return
-    try {
-        const response = await fetch(`http://localhost:3000/api/roles/${props.role.id}/permissions/${permissionId}`, {
-            method: 'DELETE'
-        })
-        if (response.ok) {
-            await fetchRolePermissions()
-            emit('refresh')
-        }
-    } catch (error) {
-        console.error('Error removing permission:', error)
+  if (!props.role) return
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/roles/${props.role.id}/permissions/${permissionId}`,
+      {
+        method: 'DELETE',
+      },
+    )
+    if (response.ok) {
+      await fetchRolePermissions()
+      emit('refresh')
     }
+  } catch (error) {
+    console.error('Error removing permission:', error)
+  }
 }
 
 const deleteRole = async () => {
   if (!props.role) return
   if (!confirm('Are you sure you want to delete this role?')) return
-  
+
   try {
     const response = await fetch(`http://localhost:3000/api/roles/${props.role.id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     })
     if (response.ok) {
       emit('delete', props.role.id)
@@ -85,106 +88,192 @@ const deleteRole = async () => {
   }
 }
 
-watch(() => props.role, () => {
-  if (props.isOpen && props.role) {
-    fetchRolePermissions()
-  }
-})
+const isInherited = (permissionId: string) => {
+  if (!props.role || !props.role.permissions) return false
+  return !props.role.permissions.includes(permissionId)
+}
 
-watch(() => props.isOpen, (isOpen) => {
-  if (isOpen) {
-    fetchAvailablePermissions()
-    if (props.role) fetchRolePermissions()
-  }
-})
+watch(
+  () => props.role,
+  () => {
+    if (props.isOpen && props.role) {
+      fetchRolePermissions()
+    }
+  },
+)
+
+watch(
+  () => props.isOpen,
+  (isOpen) => {
+    if (isOpen) {
+      fetchAvailablePermissions()
+      if (props.role) fetchRolePermissions()
+    }
+  },
+)
 </script>
 
 <template>
-  <div v-if="isOpen" class="modal-overlay" @click.self="$emit('close')">
-    <div class="modal-content">
+  <div v-if="isOpen" class="modal-backdrop" @click.self="$emit('close')">
+    <div class="modal">
       <div class="modal-header">
-        <h2>{{ role?.name }}</h2>
-        <button @click="$emit('close')">X</button>
-      </div>
-      <p>{{ role?.description }}</p>
-      
-      <h3>Permissions</h3>
-      <ul>
-        <li v-for="perm in permissions" :key="perm.id">
-          {{ perm.resource }}: {{ perm.action }}
-          <button @click="removePermission(perm.id)" class="small-btn">Remove</button>
-        </li>
-      </ul>
-      
-      <div class="add-permission">
-        <select v-model="selectedPermission">
-          <option disabled value="">Select permission</option>
-          <option v-for="perm in availablePermissions" :key="perm.id" :value="perm.id">
-            {{ perm.resource }}: {{ perm.action }}
-          </option>
-        </select>
-        <button @click="addPermission">Add</button>
+        <h2 class="modal-title">{{ role?.name }}</h2>
+        <button @click="$emit('close')" class="btn btn-ghost btn-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
 
-      <div class="actions">
-        <button @click="deleteRole" class="delete-btn">Delete Role</button>
+      <div class="modal-body">
+        <p class="text-secondary mb-6">{{ role?.description }}</p>
+
+        <h3 class="section-title">Permissions</h3>
+        <ul class="permission-list">
+          <li v-for="perm in permissions" :key="perm.id" class="permission-item">
+            <span class="permission-text">
+              <span class="text-primary">{{ perm.resource }}</span
+              >:
+              <span class="text-secondary">{{ perm.action }}</span>
+            </span>
+            <div class="flex items-center gap-2">
+              <span v-if="isInherited(perm.id)" class="badge badge-secondary">Inherited</span>
+              <button
+                @click="removePermission(perm.id)"
+                class="btn btn-ghost btn-sm"
+                :disabled="isInherited(perm.id)"
+                :title="
+                  isInherited(perm.id) ? 'Cannot remove inherited permission' : 'Remove permission'
+                "
+              >
+                Remove
+              </button>
+            </div>
+          </li>
+          <li v-if="permissions.length === 0" class="text-tertiary italic">
+            No permissions assigned
+          </li>
+        </ul>
+
+        <div class="add-permission-form">
+          <select v-model="selectedPermission" class="input flex-1">
+            <option disabled value="">Select permission to add</option>
+            <option v-for="perm in availablePermissions" :key="perm.id" :value="perm.id">
+              {{ perm.resource }}: {{ perm.action }}
+            </option>
+          </select>
+          <button @click="addPermission" class="btn btn-primary" :disabled="!selectedPermission">
+            Add
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button @click="deleteRole" class="btn btn-danger">Delete Role</button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+.mb-6 {
+  margin-bottom: var(--space-6);
 }
 
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 500px;
-  max-width: 90%;
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-3);
 }
 
-.modal-header {
+.permission-list {
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: var(--space-6);
+}
+
+.permission-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--transition-base);
 }
 
-.add-permission {
-  margin-top: 20px;
+.permission-item:last-child {
+  border-bottom: none;
+}
+
+.permission-item:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.permission-text {
+  font-size: var(--font-size-sm);
+}
+
+.add-permission-form {
   display: flex;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
-.actions {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
+.flex-1 {
+  flex: 1;
 }
 
-.delete-btn {
-  background: #ff4444;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
+.btn-sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-xs);
+  height: auto;
 }
 
-.small-btn {
-    font-size: 0.8em;
-    padding: 2px 5px;
-    margin-left: 10px;
+.italic {
+  font-style: italic;
+}
+
+.text-tertiary {
+  color: var(--color-text-tertiary);
+}
+
+.gap-2 {
+  gap: var(--space-2);
+}
+
+.items-center {
+  align-items: center;
+}
+
+.badge {
+  font-size: var(--font-size-xs);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.badge-secondary {
+  background-color: var(--color-surface-active);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

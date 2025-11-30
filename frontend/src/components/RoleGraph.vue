@@ -20,10 +20,12 @@ interface Role {
   name: string
   description: string
   parentRoles: string[]
+  permissions: string[]
 }
 
 const nodes = ref([])
 const edges = ref([])
+const rawRoles = ref<Role[]>([])
 const newRoleName = ref('')
 const newRoleDescription = ref('')
 const selectedRole = ref<Role | null>(null)
@@ -34,7 +36,7 @@ const confirmDialog = ref({
   isOpen: false,
   title: '',
   message: '',
-  onConfirm: () => {}
+  onConfirm: () => {},
 })
 
 // Toast system
@@ -47,7 +49,8 @@ const fetchRoles = async () => {
     const response = await fetch('http://localhost:3000/api/roles')
     if (!response.ok) throw new Error('Failed to fetch roles')
     const roles: Role[] = await response.json()
-    
+    rawRoles.value = roles
+
     // Transform roles to nodes
     let newNodes = roles.map((role) => ({
       id: role.id,
@@ -58,9 +61,9 @@ const fetchRoles = async () => {
 
     // Transform relationships to edges with custom type
     const newEdges = []
-    roles.forEach(role => {
-      role.parentRoles.forEach(parentId => {
-        const parentRole = roles.find(r => r.id === parentId)
+    roles.forEach((role) => {
+      role.parentRoles.forEach((parentId) => {
+        const parentRole = roles.find((r) => r.id === parentId)
         const parentName = parentRole ? parentRole.name : 'Unknown'
         newEdges.push({
           id: `e${parentId}-${role.id}`,
@@ -70,11 +73,11 @@ const fetchRoles = async () => {
           animated: true,
           style: { stroke: '#8b5cf6', strokeWidth: 2 },
           markerEnd: { type: 'arrowclosed', color: '#8b5cf6' },
-          data: { parentName, childName: role.name }
+          data: { parentName, childName: role.name },
         })
       })
     })
-    
+
     // Apply Dagre Layout
     const dagreGraph = new dagre.graphlib.Graph()
     dagreGraph.setDefaultEdgeLabel(() => ({}))
@@ -100,11 +103,10 @@ const fetchRoles = async () => {
 
     nodes.value = newNodes
     edges.value = newEdges
-    
-    setTimeout(() => {
-        fitView()
-    }, 100)
 
+    setTimeout(() => {
+      fitView()
+    }, 100)
   } catch (err) {
     console.error('Error fetching roles:', err)
     error('Error al cargar los roles')
@@ -113,19 +115,19 @@ const fetchRoles = async () => {
 
 const createRole = async () => {
   if (!newRoleName.value) return
-  
+
   try {
     const response = await fetch('http://localhost:3000/api/roles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: newRoleName.value,
-        description: newRoleDescription.value
-      })
+        description: newRoleDescription.value,
+      }),
     })
-    
+
     if (!response.ok) throw new Error('Failed to create role')
-    
+
     await fetchRoles()
     newRoleName.value = ''
     newRoleDescription.value = ''
@@ -142,12 +144,12 @@ onConnect(async (params: Connection) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        parentRoleId: params.source
-      })
+        parentRoleId: params.source,
+      }),
     })
 
     if (!response.ok) throw new Error('Failed to link roles')
-    
+
     addEdges([params])
     success('Relación creada exitosamente')
   } catch (err) {
@@ -157,50 +159,47 @@ onConnect(async (params: Connection) => {
 })
 
 const handleEdgeDelete = async (edgeId: string) => {
-  const edge = edges.value.find(e => e.id === edgeId)
+  const edge = edges.value.find((e) => e.id === edgeId)
   if (!edge) return
-  
-  const parentNode = nodes.value.find(n => n.id === edge.source)
-  const childNode = nodes.value.find(n => n.id === edge.target)
+
+  const parentNode = nodes.value.find((n) => n.id === edge.source)
+  const childNode = nodes.value.find((n) => n.id === edge.target)
   const parentName = parentNode?.data?.label || 'Unknown'
   const childName = childNode?.data?.label || 'Unknown'
-  
+
   confirmDialog.value = {
     isOpen: true,
     title: 'Eliminar Relación',
     message: `¿Estás seguro de que deseas eliminar la relación de herencia?\n\nPadre: ${parentName}\nHijo: ${childName}\n\nEsta acción no se puede deshacer.`,
     onConfirm: async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/roles/${edge.target}/parent/${edge.source}`, {
-          method: 'DELETE'
-        })
-        
+        const response = await fetch(
+          `http://localhost:3000/api/roles/${edge.target}/parent/${edge.source}`,
+          {
+            method: 'DELETE',
+          },
+        )
+
         if (!response.ok) {
           const errorText = await response.text()
           throw new Error(`Backend error: ${response.status} - ${errorText}`)
         }
-        
+
         // Remove edge from UI
-        edges.value = edges.value.filter(e => e.id !== edgeId)
+        edges.value = edges.value.filter((e) => e.id !== edgeId)
         success('Relación eliminada exitosamente')
       } catch (err) {
         console.error('Error removing link:', err)
         error(`Error al eliminar la relación: ${err.message}`)
       }
-    }
+    },
   }
 }
 
-
 onNodeClick((event) => {
-  const role = nodes.value.find(n => n.id === event.node.id)
+  const role = rawRoles.value.find((r) => r.id === event.node.id)
   if (role) {
-    selectedRole.value = {
-        id: role.id,
-        name: role.data.label,
-        description: role.data.description,
-        parentRoles: []
-    }
+    selectedRole.value = role
     isModalOpen.value = true
   }
 })
@@ -232,16 +231,8 @@ onMounted(() => {
   <div class="role-graph-container">
     <!-- Toolbar -->
     <div class="toolbar">
-      <input 
-        v-model="newRoleName" 
-        placeholder="Nombre del rol" 
-        class="input"
-      />
-      <input 
-        v-model="newRoleDescription" 
-        placeholder="Descripción" 
-        class="input"
-      />
+      <input v-model="newRoleName" placeholder="Nombre del rol" class="input" />
+      <input v-model="newRoleDescription" placeholder="Descripción" class="input" />
       <button @click="createRole" class="btn btn-primary">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -263,16 +254,11 @@ onMounted(() => {
 
     <!-- Graph -->
     <div class="graph-container">
-      <VueFlow
-        v-model:nodes="nodes"
-        v-model:edges="edges"
-        fit-view-on-init
-        class="vue-flow-custom"
-      >
+      <VueFlow v-model:nodes="nodes" v-model:edges="edges" fit-view-on-init class="vue-flow-custom">
         <template #edge-custom="edgeProps">
           <CustomEdge v-bind="edgeProps" @delete="handleEdgeDelete" />
         </template>
-        
+
         <Background pattern-color="#404040" :gap="16" />
         <Controls />
         <MiniMap />
@@ -280,9 +266,9 @@ onMounted(() => {
     </div>
 
     <!-- Modals and Notifications -->
-    <RoleDetailsModal 
-      :role="selectedRole" 
-      :is-open="isModalOpen" 
+    <RoleDetailsModal
+      :role="selectedRole"
+      :is-open="isModalOpen"
       @close="onModalClose"
       @delete="onRoleDeleted"
       @refresh="fetchRoles"
@@ -300,12 +286,7 @@ onMounted(() => {
 
     <!-- Toast Container -->
     <div class="toast-container">
-      <Toast
-        v-for="toast in toasts"
-        :key="toast.id"
-        v-bind="toast"
-        @remove="removeToast"
-      />
+      <Toast v-for="toast in toasts" :key="toast.id" v-bind="toast" @remove="removeToast" />
     </div>
   </div>
 </template>
@@ -373,7 +354,9 @@ onMounted(() => {
 
 :deep(.vue-flow__node.selected) {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1), var(--shadow-lg);
+  box-shadow:
+    0 0 0 3px rgba(139, 92, 246, 0.1),
+    var(--shadow-lg);
 }
 
 /* Custom edge styles */
