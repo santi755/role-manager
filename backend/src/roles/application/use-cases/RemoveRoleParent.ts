@@ -29,7 +29,7 @@ export class RemoveRoleParent {
         }
 
         // Check if role has this parent
-        if (!role.getParentRoles().has(parentRoleId)) {
+        if (!role.hasParentRole(parentRoleId)) {
             throw new Error(
                 `Role does not have parent role ${command.parentRoleId}`,
             );

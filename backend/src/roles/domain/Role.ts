@@ -82,11 +82,18 @@ export class Role {
         if (this.id.equals(parentId)) {
             throw new Error('Role cannot be its own parent');
         }
-        this.parentRoles.add(parentId);
+        if (!this.hasParentRole(parentId)) {
+            this.parentRoles.add(parentId);
+        }
     }
 
     removeParentRole(parentId: RoleId): void {
-        this.parentRoles.delete(parentId);
+        const roleToDelete = Array.from(this.parentRoles).find((p) =>
+            p.equals(parentId),
+        );
+        if (roleToDelete) {
+            this.parentRoles.delete(roleToDelete);
+        }
     }
 
     hasParentRole(parentId: RoleId): boolean {
@@ -94,11 +101,18 @@ export class Role {
     }
 
     grantPermission(permissionId: PermissionId): void {
-        this.permissions.add(permissionId);
+        if (!this.hasPermission(permissionId)) {
+            this.permissions.add(permissionId);
+        }
     }
 
     revokePermission(permissionId: PermissionId): void {
-        this.permissions.delete(permissionId);
+        const permissionToDelete = Array.from(this.permissions).find((p) =>
+            p.equals(permissionId),
+        );
+        if (permissionToDelete) {
+            this.permissions.delete(permissionToDelete);
+        }
     }
 
     hasPermission(permissionId: PermissionId): boolean {

@@ -23,7 +23,7 @@ export class DeleteRole {
 
         const allRoles = await this.roleRepository.findAll();
         for (const otherRole of allRoles) {
-            if (otherRole.getParentRoles().has(roleId)) {
+            if (otherRole.hasParentRole(roleId)) {
                 otherRole.removeParentRole(roleId);
                 await this.roleRepository.save(otherRole);
             }
