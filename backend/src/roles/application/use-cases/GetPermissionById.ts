@@ -28,6 +28,9 @@ export class GetPermissionById {
             action: permission.getResourceAction().getAction(),
             description: permission.getDescription(),
             createdAt: permission.getCreatedAt(),
+            parentPermissions: Array.from(permission.getParentPermissions()).map((id) =>
+                id.toString(),
+            ),
         };
     }
 }

@@ -4,4 +4,5 @@ export class PermissionDto {
     action: string;
     description: string;
     createdAt: Date;
+    parentPermissions: string[];
 }

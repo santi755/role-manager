@@ -15,6 +15,9 @@ import { GetPermissionById } from './application/use-cases/GetPermissionById';
 import { RevokePermissionFromRole } from './application/use-cases/RevokePermissionFromRole';
 import { RemoveRoleParent } from './application/use-cases/RemoveRoleParent';
 import { DeleteRole } from './application/use-cases/DeleteRole';
+import { SetPermissionParent } from './application/use-cases/SetPermissionParent';
+import { RemovePermissionParent } from './application/use-cases/RemovePermissionParent';
+import { GetPermissionHierarchy } from './application/use-cases/GetPermissionHierarchy';
 import { MongoRoleRepository } from './infrastructure/repositories/MongoRoleRepository';
 import { MongoPermissionRepository } from './infrastructure/repositories/MongoPermissionRepository';
 import { RoleDocument, RoleSchema } from './infrastructure/schemas/role.schema';
@@ -64,6 +67,9 @@ import { PermissionsController } from './infrastructure/controllers/PermissionsC
         GetRoleHierarchy,
         GetAllPermissions,
         GetPermissionById,
+        SetPermissionParent,
+        RemovePermissionParent,
+        GetPermissionHierarchy,
     ],
     exports: [
         'RoleRepository',
@@ -83,6 +89,9 @@ import { PermissionsController } from './infrastructure/controllers/PermissionsC
         GetRoleHierarchy,
         GetAllPermissions,
         GetPermissionById,
+        SetPermissionParent,
+        RemovePermissionParent,
+        GetPermissionHierarchy,
     ],
 })
 export class RolesModule { }

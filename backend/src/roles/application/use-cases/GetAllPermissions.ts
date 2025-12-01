@@ -16,7 +16,6 @@ export class GetAllPermissions {
     async execute(query?: GetAllPermissionsQuery): Promise<PermissionDto[]> {
         const permissions = await this.permissionRepository.findAll();
 
-        // Filter by resource if provided
         const filteredPermissions = query?.resource
             ? permissions.filter(
                 (p) => p.getResourceAction().getResource() === query.resource,
@@ -29,6 +28,9 @@ export class GetAllPermissions {
             action: permission.getResourceAction().getAction(),
             description: permission.getDescription(),
             createdAt: permission.getCreatedAt(),
+            parentPermissions: Array.from(permission.getParentPermissions()).map((id) =>
+                id.toString(),
+            ),
         }));
     }
 }
