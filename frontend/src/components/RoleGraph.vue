@@ -82,7 +82,7 @@ const fetchRoles = async () => {
       position: { x: 0, y: 0 },
       data: { label: role.name, description: role.description },
       type: 'default',
-      class: 'role-node'
+      class: 'role-node',
     }))
 
     // Transform relationships to edges with custom type
@@ -124,7 +124,7 @@ const fetchPermissions = async () => {
       position: { x: 0, y: 0 },
       data: { label: `${perm.resource}:${perm.action}`, description: perm.description },
       type: 'default',
-      class: 'permission-node'
+      class: 'permission-node',
     }))
 
     // Transform relationships to edges
@@ -156,34 +156,34 @@ const fetchPermissions = async () => {
 }
 
 const applyLayout = (newNodes: any[], newEdges: any[]) => {
-    const dagreGraph = new dagre.graphlib.Graph()
-    dagreGraph.setDefaultEdgeLabel(() => ({}))
-    dagreGraph.setGraph({ rankdir: 'TB' })
+  const dagreGraph = new dagre.graphlib.Graph()
+  dagreGraph.setDefaultEdgeLabel(() => ({}))
+  dagreGraph.setGraph({ rankdir: 'TB' })
 
-    newNodes.forEach((node) => {
-      dagreGraph.setNode(node.id, { width: 150, height: 50 })
-    })
+  newNodes.forEach((node) => {
+    dagreGraph.setNode(node.id, { width: 150, height: 50 })
+  })
 
-    newEdges.forEach((edge) => {
-      dagreGraph.setEdge(edge.source, edge.target)
-    })
+  newEdges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target)
+  })
 
-    dagre.layout(dagreGraph)
+  dagre.layout(dagreGraph)
 
-    const layoutedNodes = newNodes.map((node) => {
-      const nodeWithPosition = dagreGraph.node(node.id)
-      return {
-        ...node,
-        position: { x: nodeWithPosition.x - 75, y: nodeWithPosition.y - 25 },
-      }
-    })
+  const layoutedNodes = newNodes.map((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id)
+    return {
+      ...node,
+      position: { x: nodeWithPosition.x - 75, y: nodeWithPosition.y - 25 },
+    }
+  })
 
-    nodes.value = layoutedNodes
-    edges.value = newEdges
+  nodes.value = layoutedNodes
+  edges.value = newEdges
 
-    setTimeout(() => {
-      fitView()
-    }, 100)
+  setTimeout(() => {
+    fitView()
+  }, 100)
 }
 
 const createRole = async () => {
@@ -213,11 +213,13 @@ const createRole = async () => {
 
 onConnect(async (params: Connection) => {
   try {
-    const endpoint = viewMode.value === 'roles' 
+    const endpoint =
+      viewMode.value === 'roles'
         ? `http://localhost:3000/api/roles/${params.target}/parent`
         : `http://localhost:3000/api/permissions/${params.target}/parent`
-    
-    const body = viewMode.value === 'roles'
+
+    const body =
+      viewMode.value === 'roles'
         ? { parentRoleId: params.source }
         : { parentPermissionId: params.source }
 
@@ -228,8 +230,8 @@ onConnect(async (params: Connection) => {
     })
 
     if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to link')
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to link')
     }
 
     addEdges([params])
@@ -256,12 +258,13 @@ const handleEdgeDelete = async (edgeId: string) => {
     message: `¿Estás seguro de que deseas eliminar la relación de herencia?\n\nPadre: ${parentName}\nHijo: ${childName}\n\nEsta acción no se puede deshacer.`,
     onConfirm: async () => {
       try {
-        const endpoint = viewMode.value === 'roles'
+        const endpoint =
+          viewMode.value === 'roles'
             ? `http://localhost:3000/api/roles/${edge.target}/parent/${edge.source}`
             : `http://localhost:3000/api/permissions/${edge.target}/parent/${edge.source}`
 
         const response = await fetch(endpoint, {
-            method: 'DELETE',
+          method: 'DELETE',
         })
 
         if (!response.ok) {
@@ -285,14 +288,14 @@ onNodeClick((event) => {
   if (viewMode.value === 'roles') {
     const role = rawRoles.value.find((r) => r.id === event.node.id)
     if (role) {
-        selectedRole.value = role
-        isModalOpen.value = true
+      selectedRole.value = role
+      isModalOpen.value = true
     }
   } else {
     const permission = rawPermissions.value.find((p) => p.id === event.node.id)
     if (permission) {
-        selectedPermission.value = permission
-        isPermissionDetailsModalOpen.value = true
+      selectedPermission.value = permission
+      isPermissionDetailsModalOpen.value = true
     }
   }
 })
@@ -303,8 +306,8 @@ const onModalClose = () => {
 }
 
 const onPermissionDetailsModalClose = () => {
-    isPermissionDetailsModalOpen.value = false
-    selectedPermission.value = null
+  isPermissionDetailsModalOpen.value = false
+  selectedPermission.value = null
 }
 
 const onRoleDeleted = (roleId: string) => {
@@ -328,7 +331,7 @@ const handlePermissionCreated = (permission: { resource: string; action: string 
 }
 
 watch(viewMode, () => {
-    fetchData()
+  fetchData()
 })
 
 onMounted(() => {
@@ -341,19 +344,22 @@ onMounted(() => {
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="view-toggle">
-        <button 
-            class="btn" 
-            :class="{ 'btn-primary': viewMode === 'roles', 'btn-ghost': viewMode !== 'roles' }"
-            @click="viewMode = 'roles'"
+        <button
+          class="btn"
+          :class="{ 'btn-primary': viewMode === 'roles', 'btn-ghost': viewMode !== 'roles' }"
+          @click="viewMode = 'roles'"
         >
-            Roles
+          Roles
         </button>
-        <button 
-            class="btn" 
-            :class="{ 'btn-primary': viewMode === 'permissions', 'btn-ghost': viewMode !== 'permissions' }"
-            @click="viewMode = 'permissions'"
+        <button
+          class="btn"
+          :class="{
+            'btn-primary': viewMode === 'permissions',
+            'btn-ghost': viewMode !== 'permissions',
+          }"
+          @click="viewMode = 'permissions'"
         >
-            Permisos
+          Permisos
         </button>
       </div>
 
@@ -363,13 +369,39 @@ onMounted(() => {
         <input v-model="newRoleName" placeholder="Nombre del rol" class="input" />
         <input v-model="newRoleDescription" placeholder="Descripción" class="input" />
         <button @click="createRole" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" /></svg>
-            Crear Rol
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" x2="12" y1="5" y2="19" />
+            <line x1="5" x2="19" y1="12" y2="12" />
+          </svg>
+          Crear Rol
         </button>
       </template>
-      
+
       <button @click="isPermissionModalOpen = true" class="btn btn-secondary">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" /></svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="12" x2="12" y1="5" y2="19" />
+          <line x1="5" x2="19" y1="12" y2="12" />
+        </svg>
         Crear Permiso
       </button>
     </div>
@@ -397,10 +429,10 @@ onMounted(() => {
     />
 
     <PermissionDetailsModal
-        :permission="selectedPermission"
-        :is-open="isPermissionDetailsModalOpen"
-        @close="onPermissionDetailsModalClose"
-        @refresh="fetchPermissions"
+      :permission="selectedPermission"
+      :is-open="isPermissionDetailsModalOpen"
+      @close="onPermissionDetailsModalClose"
+      @refresh="fetchPermissions"
     />
 
     <PermissionModal
@@ -444,18 +476,18 @@ onMounted(() => {
 }
 
 .view-toggle {
-    display: flex;
-    background-color: var(--color-background);
-    padding: 4px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
+  display: flex;
+  background-color: var(--color-background);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
 }
 
 .divider {
-    width: 1px;
-    height: 24px;
-    background-color: var(--color-border);
-    margin: 0 var(--space-2);
+  width: 1px;
+  height: 24px;
+  background-color: var(--color-border);
+  margin: 0 var(--space-2);
 }
 
 .graph-container {
@@ -497,7 +529,7 @@ onMounted(() => {
 }
 
 :deep(.vue-flow__node.permission-node) {
-    border-color: #10b981; /* Green border for permissions */
+  border-color: #10b981; /* Green border for permissions */
 }
 
 :deep(.vue-flow__node:hover) {

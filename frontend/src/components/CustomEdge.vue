@@ -57,30 +57,21 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <g
-    @mouseenter="handleMouseEnter"
-    @mouseleave="handleMouseLeave"
-  >
+  <g @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
     <!-- Base edge path -->
     <BaseEdge
       :id="id"
       :style="{
         stroke: isHovered ? '#a78bfa' : '#8b5cf6',
         strokeWidth: isHovered ? 3 : 2,
-        transition: 'all 0.2s ease'
+        transition: 'all 0.2s ease',
       }"
       :path="path"
       :marker-end="markerEnd"
     />
-    
+
     <!-- Invisible wider path for easier hovering -->
-    <path
-      :d="path"
-      fill="none"
-      stroke="transparent"
-      stroke-width="20"
-      style="cursor: pointer;"
-    />
+    <path :d="path" fill="none" stroke="transparent" stroke-width="20" style="cursor: pointer" />
 
     <!-- Delete button -->
     <EdgeLabelRenderer>
@@ -143,7 +134,9 @@ const handleDelete = () => {
   cursor: pointer;
   color: var(--color-text-secondary, #a3a3a3);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -2px rgba(0, 0, 0, 0.3);
 }
 
 .edge-delete-button:hover {
@@ -151,7 +144,9 @@ const handleDelete = () => {
   border-color: var(--color-error, #ef4444);
   color: white;
   transform: scale(1.1);
-  box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3), 0 4px 6px -4px rgba(239, 68, 68, 0.3);
+  box-shadow:
+    0 10px 15px -3px rgba(239, 68, 68, 0.3),
+    0 4px 6px -4px rgba(239, 68, 68, 0.3);
 }
 
 .edge-delete-button:active {

@@ -9,7 +9,7 @@ export interface ToastProps {
 }
 
 const props = withDefaults(defineProps<ToastProps>(), {
-  duration: 3000
+  duration: 3000,
 })
 
 const emit = defineEmits<{
@@ -78,12 +78,7 @@ const getIcon = () => {
 
 <template>
   <Transition name="toast">
-    <div
-      v-if="isVisible"
-      class="toast"
-      :class="`toast-${type}`"
-      role="alert"
-    >
+    <div v-if="isVisible" class="toast" :class="`toast-${type}`" role="alert">
       <div class="toast-icon" v-html="getIcon()"></div>
       <p class="toast-message">{{ message }}</p>
       <button class="toast-close" @click="close" aria-label="Close">
@@ -114,7 +109,9 @@ const getIcon = () => {
   background-color: var(--color-background-elevated, #1f1f1f);
   border: 1px solid var(--color-border, #262626);
   border-radius: var(--radius-lg, 0.75rem);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.3),
+    0 8px 10px -6px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: flex-start;
   gap: var(--space-3, 0.75rem);

@@ -13,7 +13,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   confirmText: 'Confirmar',
   cancelText: 'Cancelar',
-  type: 'danger'
+  type: 'danger',
 })
 
 const emit = defineEmits<{
@@ -24,11 +24,14 @@ const emit = defineEmits<{
 
 const isVisible = ref(false)
 
-watch(() => props.isOpen, (newVal) => {
-  if (newVal) {
-    isVisible.value = true
-  }
-})
+watch(
+  () => props.isOpen,
+  (newVal) => {
+    if (newVal) {
+      isVisible.value = true
+    }
+  },
+)
 
 const handleConfirm = () => {
   emit('confirm')
@@ -57,11 +60,7 @@ const handleBackdropClick = (e: MouseEvent) => {
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div
-        v-if="isOpen && isVisible"
-        class="modal-backdrop"
-        @click="handleBackdropClick"
-      >
+      <div v-if="isOpen && isVisible" class="modal-backdrop" @click="handleBackdropClick">
         <div class="modal" role="dialog" aria-modal="true">
           <div class="modal-header">
             <div class="modal-icon" :class="`modal-icon-${type}`">
@@ -82,7 +81,7 @@ const handleBackdropClick = (e: MouseEvent) => {
                 <line x1="12" x2="12" y1="8" y2="12" />
                 <line x1="12" x2="12.01" y1="16" y2="16" />
               </svg>
-              
+
               <!-- Warning icon -->
               <svg
                 v-else-if="type === 'warning'"
@@ -96,11 +95,13 @@ const handleBackdropClick = (e: MouseEvent) => {
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                <path
+                  d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+                />
                 <line x1="12" x2="12" y1="9" y2="13" />
                 <line x1="12" x2="12.01" y1="17" y2="17" />
               </svg>
-              
+
               <!-- Info icon -->
               <svg
                 v-else
@@ -119,7 +120,7 @@ const handleBackdropClick = (e: MouseEvent) => {
                 <path d="M12 8h.01" />
               </svg>
             </div>
-            
+
             <h3 class="modal-title">{{ title }}</h3>
           </div>
 
@@ -128,10 +129,7 @@ const handleBackdropClick = (e: MouseEvent) => {
           </div>
 
           <div class="modal-footer">
-            <button
-              class="btn btn-secondary"
-              @click="handleCancel"
-            >
+            <button class="btn btn-secondary" @click="handleCancel">
               {{ cancelText }}
             </button>
             <button

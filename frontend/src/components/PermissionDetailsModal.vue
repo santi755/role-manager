@@ -2,7 +2,13 @@
 import { ref, watch } from 'vue'
 
 const props = defineProps<{
-  permission: { id: string; resource: string; action: string; description: string; parentPermissions: string[] } | null
+  permission: {
+    id: string
+    resource: string
+    action: string
+    description: string
+    parentPermissions: string[]
+  } | null
   isOpen: boolean
 }>()
 
@@ -19,14 +25,16 @@ const fetchParentPermissions = async () => {
     // Since the permission object only has IDs, we can fetch all permissions and filter
     // Or we could use the hierarchy endpoint if we want full details, but for now let's just resolve the IDs
     // A better approach might be to fetch the hierarchy for this permission
-    const response = await fetch(`http://localhost:3000/api/permissions/${props.permission.id}/hierarchy`)
+    const response = await fetch(
+      `http://localhost:3000/api/permissions/${props.permission.id}/hierarchy`,
+    )
     if (response.ok) {
       const hierarchy = await response.json()
       // The hierarchy endpoint returns ancestors. Direct parents are those in parentPermissions list.
       // But to get their names (resource:action), we need to look them up.
       // Let's use the ancestors list from hierarchy which contains full objects
-      parentPermissions.value = hierarchy.ancestors.filter((p: any) => 
-        props.permission?.parentPermissions.includes(p.id)
+      parentPermissions.value = hierarchy.ancestors.filter((p: any) =>
+        props.permission?.parentPermissions.includes(p.id),
       )
     }
   } catch (error) {
@@ -36,8 +44,8 @@ const fetchParentPermissions = async () => {
 
 const fetchAvailablePermissions = async () => {
   if (!props.permission || !props.permission.parentPermissions) {
-      availablePermissions.value = []
-      return
+    availablePermissions.value = []
+    return
   }
   try {
     const response = await fetch('http://localhost:3000/api/permissions')
@@ -45,9 +53,9 @@ const fetchAvailablePermissions = async () => {
       const allPermissions = await response.json()
       // Filter out self and already assigned parents to prevent cycles (simple check)
       // The backend has robust cycle detection, but we can filter obvious ones here
-      availablePermissions.value = allPermissions.filter((p: any) => 
-        p.id !== props.permission?.id && 
-        !parentPermissions.value.some(pp => pp.id === p.id)
+      availablePermissions.value = allPermissions.filter(
+        (p: any) =>
+          p.id !== props.permission?.id && !parentPermissions.value.some((pp) => pp.id === p.id),
       )
     }
   } catch (error) {
@@ -58,12 +66,15 @@ const fetchAvailablePermissions = async () => {
 const addParentPermission = async () => {
   if (!selectedParentPermission.value || !props.permission) return
   try {
-    const response = await fetch(`http://localhost:3000/api/permissions/${props.permission.id}/parent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ parentPermissionId: selectedParentPermission.value }),
-    })
-    
+    const response = await fetch(
+      `http://localhost:3000/api/permissions/${props.permission.id}/parent`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parentPermissionId: selectedParentPermission.value }),
+      },
+    )
+
     if (response.ok) {
       emit('refresh')
       selectedParentPermission.value = ''
@@ -73,8 +84,8 @@ const addParentPermission = async () => {
       await fetchParentPermissions()
       await fetchAvailablePermissions()
     } else {
-        const error = await response.json();
-        alert(`Error: ${error.message}`);
+      const error = await response.json()
+      alert(`Error: ${error.message}`)
     }
   } catch (error) {
     console.error('Error adding parent permission:', error)
@@ -93,7 +104,7 @@ const removeParentPermission = async (parentId: string) => {
     if (response.ok) {
       emit('refresh')
       // Optimistic update or re-fetch
-      parentPermissions.value = parentPermissions.value.filter(p => p.id !== parentId)
+      parentPermissions.value = parentPermissions.value.filter((p) => p.id !== parentId)
       await fetchAvailablePermissions()
     }
   } catch (error) {
@@ -127,7 +138,8 @@ watch(
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">
-            <span class="text-primary">{{ permission?.resource }}</span>:{{ permission?.action }}
+          <span class="text-primary">{{ permission?.resource }}</span
+          >:{{ permission?.action }}
         </h2>
         <button @click="$emit('close')" class="btn btn-ghost btn-icon">
           <svg
@@ -154,7 +166,8 @@ watch(
         <ul class="permission-list">
           <li v-for="parent in parentPermissions" :key="parent.id" class="permission-item">
             <span class="permission-text">
-              <span class="text-primary">{{ parent.resource }}</span>:
+              <span class="text-primary">{{ parent.resource }}</span
+              >:
               <span class="text-secondary">{{ parent.action }}</span>
             </span>
             <div class="flex items-center gap-2">
@@ -179,7 +192,11 @@ watch(
               {{ perm.resource }}: {{ perm.action }}
             </option>
           </select>
-          <button @click="addParentPermission" class="btn btn-primary" :disabled="!selectedParentPermission">
+          <button
+            @click="addParentPermission"
+            class="btn btn-primary"
+            :disabled="!selectedParentPermission"
+          >
             Add Parent
           </button>
         </div>
