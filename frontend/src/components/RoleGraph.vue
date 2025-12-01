@@ -7,6 +7,7 @@ import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import CustomEdge from './CustomEdge.vue'
 import RoleDetailsModal from './RoleDetailsModal.vue'
+import PermissionModal from './PermissionModal.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
 import Toast from './Toast.vue'
 import { useToast } from '../composables/useToast'
@@ -30,6 +31,7 @@ const newRoleName = ref('')
 const newRoleDescription = ref('')
 const selectedRole = ref<Role | null>(null)
 const isModalOpen = ref(false)
+const isPermissionModalOpen = ref(false)
 
 // Confirmation dialog state
 const confirmDialog = ref({
@@ -222,6 +224,10 @@ const handleConfirm = () => {
   closeConfirmDialog()
 }
 
+const handlePermissionCreated = (permission: { resource: string; action: string }) => {
+  success(`Permission created: ${permission.resource}:${permission.action}`)
+}
+
 onMounted(() => {
   fetchRoles()
 })
@@ -250,6 +256,23 @@ onMounted(() => {
         </svg>
         Crear Rol
       </button>
+      <button @click="isPermissionModalOpen = true" class="btn btn-secondary">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="12" x2="12" y1="5" y2="19" />
+          <line x1="5" x2="19" y1="12" y2="12" />
+        </svg>
+        Crear Permiso
+      </button>
     </div>
 
     <!-- Graph -->
@@ -272,6 +295,12 @@ onMounted(() => {
       @close="onModalClose"
       @delete="onRoleDeleted"
       @refresh="fetchRoles"
+    />
+
+    <PermissionModal
+      :is-open="isPermissionModalOpen"
+      @close="isPermissionModalOpen = false"
+      @created="handlePermissionCreated"
     />
 
     <ConfirmDialog
