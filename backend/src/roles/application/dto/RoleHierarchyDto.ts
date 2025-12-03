@@ -1,7 +1,7 @@
 import { RoleDto } from './RoleDto';
 
 export class RoleHierarchyDto {
-    role: RoleDto;
-    ancestors: RoleDto[];
-    descendants: RoleDto[];
+  role: RoleDto;
+  ancestors: RoleDto[];
+  descendants: RoleDto[];
 }

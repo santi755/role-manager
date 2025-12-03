@@ -1,13 +1,13 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Delete,
-    Param,
-    Body,
-    Query,
-    HttpCode,
-    HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Param,
+  Body,
+  Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { CreatePermission } from '../../application/use-cases/CreatePermission';
 import { GetAllPermissions } from '../../application/use-cases/GetAllPermissions';
@@ -23,68 +23,68 @@ import { PermissionHierarchyDto } from '../../application/dto/PermissionHierarch
 @Controller('api/permissions')
 // Trigger rebuild
 export class PermissionsController {
-    constructor(
-        private readonly createPermission: CreatePermission,
-        private readonly getAllPermissions: GetAllPermissions,
-        private readonly getPermissionById: GetPermissionById,
-        private readonly setPermissionParent: SetPermissionParent,
-        private readonly removePermissionParent: RemovePermissionParent,
-        private readonly getPermissionHierarchy: GetPermissionHierarchy,
-    ) { }
+  constructor(
+    private readonly createPermission: CreatePermission,
+    private readonly getAllPermissions: GetAllPermissions,
+    private readonly getPermissionById: GetPermissionById,
+    private readonly setPermissionParent: SetPermissionParent,
+    private readonly removePermissionParent: RemovePermissionParent,
+    private readonly getPermissionHierarchy: GetPermissionHierarchy,
+  ) {}
 
-    @Post()
-    async create(@Body() dto: CreatePermissionDto): Promise<PermissionDto> {
-        const permission = await this.createPermission.execute(dto);
-        return {
-            id: permission.getId().toString(),
-            resource: permission.getResourceAction().getResource(),
-            action: permission.getResourceAction().getAction(),
-            description: permission.getDescription(),
-            createdAt: permission.getCreatedAt(),
-            parentPermissions: Array.from(permission.getParentPermissions()).map((id) =>
-                id.toString(),
-            ),
-        };
-    }
+  @Post()
+  async create(@Body() dto: CreatePermissionDto): Promise<PermissionDto> {
+    const permission = await this.createPermission.execute(dto);
+    return {
+      id: permission.getId().toString(),
+      resource: permission.getResourceAction().getResource(),
+      action: permission.getResourceAction().getAction(),
+      description: permission.getDescription(),
+      createdAt: permission.getCreatedAt(),
+      parentPermissions: Array.from(permission.getParentPermissions()).map(
+        (id) => id.toString(),
+      ),
+    };
+  }
 
-    @Get()
-    async findAll(
-        @Query('resource') resource?: string,
-    ): Promise<PermissionDto[]> {
-        return this.getAllPermissions.execute({ resource });
-    }
+  @Get()
+  async findAll(
+    @Query('resource') resource?: string,
+  ): Promise<PermissionDto[]> {
+    return this.getAllPermissions.execute({ resource });
+  }
 
-    @Get(':id')
-    async findOne(@Param('id') id: string): Promise<PermissionDto> {
-        return this.getPermissionById.execute({ permissionId: id });
-    }
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<PermissionDto> {
+    return this.getPermissionById.execute({ permissionId: id });
+  }
 
-    @Get(':id/hierarchy')
-    async getHierarchy(@Param('id') id: string): Promise<PermissionHierarchyDto> {
-        return this.getPermissionHierarchy.execute({ permissionId: id });
-    }
+  @Get(':id/hierarchy')
+  async getHierarchy(@Param('id') id: string): Promise<PermissionHierarchyDto> {
+    return this.getPermissionHierarchy.execute({ permissionId: id });
+  }
 
-    @Post(':id/parent')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    async setParent(
-        @Param('id') id: string,
-        @Body() dto: SetPermissionParentDto,
-    ): Promise<void> {
-        await this.setPermissionParent.execute({
-            permissionId: id,
-            parentPermissionId: dto.parentPermissionId,
-        });
-    }
+  @Post(':id/parent')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async setParent(
+    @Param('id') id: string,
+    @Body() dto: SetPermissionParentDto,
+  ): Promise<void> {
+    await this.setPermissionParent.execute({
+      permissionId: id,
+      parentPermissionId: dto.parentPermissionId,
+    });
+  }
 
-    @Delete(':id/parent/:parentId')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    async removeParent(
-        @Param('id') id: string,
-        @Param('parentId') parentId: string,
-    ): Promise<void> {
-        await this.removePermissionParent.execute({
-            permissionId: id,
-            parentPermissionId: parentId,
-        });
-    }
+  @Delete(':id/parent/:parentId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeParent(
+    @Param('id') id: string,
+    @Param('parentId') parentId: string,
+  ): Promise<void> {
+    await this.removePermissionParent.execute({
+      permissionId: id,
+      parentPermissionId: parentId,
+    });
+  }
 }

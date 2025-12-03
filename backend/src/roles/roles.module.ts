@@ -22,77 +22,76 @@ import { MongoRoleRepository } from './infrastructure/repositories/MongoRoleRepo
 import { MongoPermissionRepository } from './infrastructure/repositories/MongoPermissionRepository';
 import { RoleDocument, RoleSchema } from './infrastructure/schemas/role.schema';
 import {
-    PermissionDocument,
-    PermissionSchema,
+  PermissionDocument,
+  PermissionSchema,
 } from './infrastructure/schemas/permission.schema';
 import { RolesController } from './infrastructure/controllers/RolesController';
 import { PermissionsController } from './infrastructure/controllers/PermissionsController';
 
 @Module({
-    imports: [
-        MongooseModule.forFeature([
-            { name: RoleDocument.name, schema: RoleSchema },
-            { name: PermissionDocument.name, schema: PermissionSchema },
-        ]),
-    ],
-    controllers: [RolesController, PermissionsController],
-    providers: [
-        // Domain Services
-        RoleGraphService,
-        PermissionGraphService,
+  imports: [
+    MongooseModule.forFeature([
+      { name: RoleDocument.name, schema: RoleSchema },
+      { name: PermissionDocument.name, schema: PermissionSchema },
+    ]),
+  ],
+  controllers: [RolesController, PermissionsController],
+  providers: [
+    // Domain Services
+    RoleGraphService,
+    PermissionGraphService,
 
-        // Repositories - MongoDB Implementation
-        {
-            provide: 'RoleRepository',
-            useClass: MongoRoleRepository,
-        },
-        {
-            provide: 'PermissionRepository',
-            useClass: MongoPermissionRepository,
-        },
+    // Repositories - MongoDB Implementation
+    {
+      provide: 'RoleRepository',
+      useClass: MongoRoleRepository,
+    },
+    {
+      provide: 'PermissionRepository',
+      useClass: MongoPermissionRepository,
+    },
 
-        // Command Use Cases
-        CreateRole,
-        SetRoleParent,
-        CreatePermission,
-        GrantPermissionToRole,
-        RevokePermissionFromRole,
-        RemoveRoleParent,
-        DeleteRole,
+    // Command Use Cases
+    CreateRole,
+    SetRoleParent,
+    CreatePermission,
+    GrantPermissionToRole,
+    RevokePermissionFromRole,
+    RemoveRoleParent,
+    DeleteRole,
 
-        // Query Use Cases
-        GetAllRoles,
-        GetRoleById,
-        GetRolePermissions,
-        GetRoleHierarchy,
-        GetAllPermissions,
-        GetPermissionById,
-        SetPermissionParent,
-        RemovePermissionParent,
-        GetPermissionHierarchy,
-    ],
-    exports: [
-        'RoleRepository',
-        'PermissionRepository',
-        RoleGraphService,
-        PermissionGraphService,
-        CreateRole,
-        SetRoleParent,
-        CreatePermission,
-        GrantPermissionToRole,
-        RevokePermissionFromRole,
-        RemoveRoleParent,
-        DeleteRole,
-        GetAllRoles,
-        GetRoleById,
-        GetRolePermissions,
-        GetRoleHierarchy,
-        GetAllPermissions,
-        GetPermissionById,
-        SetPermissionParent,
-        RemovePermissionParent,
-        GetPermissionHierarchy,
-    ],
+    // Query Use Cases
+    GetAllRoles,
+    GetRoleById,
+    GetRolePermissions,
+    GetRoleHierarchy,
+    GetAllPermissions,
+    GetPermissionById,
+    SetPermissionParent,
+    RemovePermissionParent,
+    GetPermissionHierarchy,
+  ],
+  exports: [
+    'RoleRepository',
+    'PermissionRepository',
+    RoleGraphService,
+    PermissionGraphService,
+    CreateRole,
+    SetRoleParent,
+    CreatePermission,
+    GrantPermissionToRole,
+    RevokePermissionFromRole,
+    RemoveRoleParent,
+    DeleteRole,
+    GetAllRoles,
+    GetRoleById,
+    GetRolePermissions,
+    GetRoleHierarchy,
+    GetAllPermissions,
+    GetPermissionById,
+    SetPermissionParent,
+    RemovePermissionParent,
+    GetPermissionHierarchy,
+  ],
 })
-export class RolesModule { }
-
+export class RolesModule {}

@@ -1,11 +1,11 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CheckPermissionDto {
-    @IsNotEmpty()
-    @IsString()
-    resource: string;
+  @IsNotEmpty()
+  @IsString()
+  resource: string;
 
-    @IsNotEmpty()
-    @IsString()
-    action: string;
+  @IsNotEmpty()
+  @IsString()
+  action: string;
 }

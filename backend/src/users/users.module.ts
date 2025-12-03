@@ -14,43 +14,42 @@ import { UserDocument, UserSchema } from './infrastructure/schemas/user.schema';
 import { UsersController } from './infrastructure/controllers/UsersController';
 
 @Module({
-    imports: [
-        RolesModule,
-        MongooseModule.forFeature([
-            { name: UserDocument.name, schema: UserSchema },
-        ]),
-    ],
-    controllers: [UsersController],
-    providers: [
-        // Repositories - MongoDB Implementation
-        {
-            provide: 'UserRepository',
-            useClass: MongoUserRepository,
-        },
+  imports: [
+    RolesModule,
+    MongooseModule.forFeature([
+      { name: UserDocument.name, schema: UserSchema },
+    ]),
+  ],
+  controllers: [UsersController],
+  providers: [
+    // Repositories - MongoDB Implementation
+    {
+      provide: 'UserRepository',
+      useClass: MongoUserRepository,
+    },
 
-        // Command Use Cases
-        CreateUser,
-        AssignRoleToUser,
-        UnassignRoleFromUser,
+    // Command Use Cases
+    CreateUser,
+    AssignRoleToUser,
+    UnassignRoleFromUser,
 
-        // Query Use Cases
-        GetAllUsers,
-        GetUserById,
-        GetUserRoles,
-        GetUserPermissions,
-        CheckUserPermission,
-    ],
-    exports: [
-        'UserRepository',
-        CreateUser,
-        AssignRoleToUser,
-        UnassignRoleFromUser,
-        GetAllUsers,
-        GetUserById,
-        GetUserRoles,
-        GetUserPermissions,
-        CheckUserPermission,
-    ],
+    // Query Use Cases
+    GetAllUsers,
+    GetUserById,
+    GetUserRoles,
+    GetUserPermissions,
+    CheckUserPermission,
+  ],
+  exports: [
+    'UserRepository',
+    CreateUser,
+    AssignRoleToUser,
+    UnassignRoleFromUser,
+    GetAllUsers,
+    GetUserById,
+    GetUserRoles,
+    GetUserPermissions,
+    CheckUserPermission,
+  ],
 })
-export class UsersModule { }
-
+export class UsersModule {}
