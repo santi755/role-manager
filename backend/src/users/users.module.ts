@@ -9,9 +9,11 @@ import { GetUserById } from './application/use-cases/GetUserById';
 import { GetUserRoles } from './application/use-cases/GetUserRoles';
 import { GetUserPermissions } from './application/use-cases/GetUserPermissions';
 import { UnassignRoleFromUser } from './application/use-cases/UnassignRoleFromUser';
+import { SeedDatabase } from './application/use-cases/SeedDatabase';
 import { MongoUserRepository } from './infrastructure/repositories/MongoUserRepository';
 import { UserDocument, UserSchema } from './infrastructure/schemas/user.schema';
 import { UsersController } from './infrastructure/controllers/UsersController';
+import { SeedController } from './infrastructure/controllers/SeedController';
 
 @Module({
   imports: [
@@ -20,7 +22,7 @@ import { UsersController } from './infrastructure/controllers/UsersController';
       { name: UserDocument.name, schema: UserSchema },
     ]),
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, SeedController],
   providers: [
     // Repositories - MongoDB Implementation
     {
@@ -39,6 +41,9 @@ import { UsersController } from './infrastructure/controllers/UsersController';
     GetUserRoles,
     GetUserPermissions,
     CheckUserPermission,
+
+    // Seed Use Case
+    SeedDatabase,
   ],
   exports: [
     'UserRepository',

@@ -74,11 +74,18 @@ export class Permission {
     if (this.id.equals(parentId)) {
       throw new Error('Permission cannot be its own parent');
     }
-    this.parentPermissions.add(parentId);
+    if (!this.hasParentPermission(parentId)) {
+      this.parentPermissions.add(parentId);
+    }
   }
 
   removeParentPermission(parentId: PermissionId): void {
-    this.parentPermissions.delete(parentId);
+    const permissionToDelete = Array.from(this.parentPermissions).find((p) =>
+      p.equals(parentId),
+    );
+    if (permissionToDelete) {
+      this.parentPermissions.delete(permissionToDelete);
+    }
   }
 
   hasParentPermission(parentId: PermissionId): boolean {

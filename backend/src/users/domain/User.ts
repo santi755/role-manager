@@ -93,7 +93,9 @@ export class User {
   }
 
   assignRole(roleId: RoleId): void {
-    this.assignedRoles.add(roleId);
+    if (!this.hasRole(roleId)) {
+      this.assignedRoles.add(roleId);
+    }
   }
 
   unassignRole(roleId: RoleId): void {
