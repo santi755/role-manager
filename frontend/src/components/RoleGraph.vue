@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import dagre from 'dagre'
-import { VueFlow, useVueFlow, type Connection } from '@vue-flow/core'
+import { VueFlow, useVueFlow, type Connection, type Node, type Edge, MarkerType } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
@@ -17,6 +17,8 @@ import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import '@vue-flow/minimap/dist/style.css'
 
+import type { Permission } from '../types/permission'
+
 type ViewMode = 'roles' | 'permissions'
 
 interface Role {
@@ -27,17 +29,9 @@ interface Role {
   permissions: string[]
 }
 
-interface Permission {
-  id: string
-  resource: string
-  action: string
-  description: string
-  parentPermissions: string[]
-}
-
 const viewMode = ref<ViewMode>('roles')
-const nodes = ref([])
-const edges = ref([])
+const nodes = ref<Node[]>([])
+const edges = ref<Edge[]>([])
 const rawRoles = ref<Role[]>([])
 const rawPermissions = ref<Permission[]>([])
 const newRoleName = ref('')
@@ -77,7 +71,7 @@ const fetchRoles = async () => {
     rawRoles.value = roles
 
     // Transform roles to nodes
-    let newNodes = roles.map((role) => ({
+    const newNodes: Node[] = roles.map((role) => ({
       id: role.id,
       position: { x: 0, y: 0 },
       data: { label: role.name, description: role.description },
@@ -86,7 +80,7 @@ const fetchRoles = async () => {
     }))
 
     // Transform relationships to edges with custom type
-    const newEdges = []
+    const newEdges: Edge[] = []
     roles.forEach((role) => {
       role.parentRoles.forEach((parentId) => {
         const parentRole = roles.find((r) => r.id === parentId)
@@ -98,7 +92,7 @@ const fetchRoles = async () => {
           type: 'custom',
           animated: true,
           style: { stroke: '#8b5cf6', strokeWidth: 2 },
-          markerEnd: { type: 'arrowclosed', color: '#8b5cf6' },
+          markerEnd: { type: MarkerType.ArrowClosed, color: '#8b5cf6' },
           data: { parentName, childName: role.name },
         })
       })
@@ -119,21 +113,40 @@ const fetchPermissions = async () => {
     rawPermissions.value = permissions
 
     // Transform permissions to nodes
-    let newNodes = permissions.map((perm) => ({
-      id: perm.id,
-      position: { x: 0, y: 0 },
-      data: { label: `${perm.resource}:${perm.action}`, description: perm.description },
-      type: 'default',
-      class: 'permission-node',
-    }))
+    const newNodes: Node[] = permissions.map((perm) => {
+      let label = `${perm.resource_type}:${perm.action}`
+      if (perm.target_id) {
+        label += `:${perm.target_id}`
+      } else if (perm.scope) {
+        label += `:${perm.scope}`
+      }
+
+      return {
+        id: perm.id,
+        position: { x: 0, y: 0 },
+        data: { label, description: perm.description },
+        type: 'default',
+        class: 'permission-node',
+      }
+    })
 
     // Transform relationships to edges
-    const newEdges = []
+    const newEdges: Edge[] = []
     permissions.forEach((perm) => {
       if (perm.parentPermissions) {
         perm.parentPermissions.forEach((parentId) => {
           const parentPerm = permissions.find((p) => p.id === parentId)
-          const parentName = parentPerm ? `${parentPerm.resource}:${parentPerm.action}` : 'Unknown'
+          let parentName = 'Unknown'
+          if (parentPerm) {
+            parentName = `${parentPerm.resource_type}:${parentPerm.action}`
+            if (parentPerm.target_id) parentName += `:${parentPerm.target_id}`
+            else if (parentPerm.scope) parentName += `:${parentPerm.scope}`
+          }
+
+          let childName = `${perm.resource_type}:${perm.action}`
+          if (perm.target_id) childName += `:${perm.target_id}`
+          else if (perm.scope) childName += `:${perm.scope}`
+
           newEdges.push({
             id: `e${parentId}-${perm.id}`,
             source: parentId,
@@ -141,21 +154,21 @@ const fetchPermissions = async () => {
             type: 'custom',
             animated: true,
             style: { stroke: '#10b981', strokeWidth: 2 }, // Green for permissions
-            markerEnd: { type: 'arrowclosed', color: '#10b981' },
-            data: { parentName, childName: `${perm.resource}:${perm.action}` },
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#10b981' },
+            data: { parentName, childName },
           })
         })
       }
     })
 
     applyLayout(newNodes, newEdges)
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error fetching permissions:', err)
     error('Error al cargar los permisos')
   }
 }
 
-const applyLayout = (newNodes: any[], newEdges: any[]) => {
+const applyLayout = (newNodes: Node[], newEdges: Edge[]) => {
   const dagreGraph = new dagre.graphlib.Graph()
   dagreGraph.setDefaultEdgeLabel(() => ({}))
   dagreGraph.setGraph({ rankdir: 'TB' })
@@ -237,7 +250,7 @@ onConnect(async (params: Connection) => {
     addEdges([params])
     success('Relación creada exitosamente')
     fetchData() // Refresh to ensure consistency
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error linking:', err)
     error(`Error al crear la relación: ${err.message}`)
   }
@@ -276,7 +289,7 @@ const handleEdgeDelete = async (edgeId: string) => {
         edges.value = edges.value.filter((e) => e.id !== edgeId)
         success('Relación eliminada exitosamente')
         fetchData() // Refresh
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error removing link:', err)
         error(`Error al eliminar la relación: ${err.message}`)
       }
@@ -310,7 +323,7 @@ const onPermissionDetailsModalClose = () => {
   selectedPermission.value = null
 }
 
-const onRoleDeleted = (roleId: string) => {
+const onRoleDeleted = () => {
   fetchRoles()
 }
 

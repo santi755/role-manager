@@ -2,6 +2,17 @@
  * ResourceType represents the type of resource a permission applies to.
  * Examples: "project", "document", "user", "org", "folder", etc.
  */
+export const COMMON_RESOURCE_TYPES = {
+  PROJECT: 'project',
+  USER: 'user',
+  ROLE: 'role',
+  PERMISSION: 'permission',
+  DOCUMENT: 'document',
+  FOLDER: 'folder',
+  ORGANIZATION: 'organization',
+  TEAM: 'team',
+} as const;
+
 export class ResourceType {
   private readonly type: string;
 

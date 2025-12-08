@@ -169,8 +169,9 @@ export class PermissionGraphService {
     const testPermission = Permission.reconstitute(
       childPermission.getId(),
       childPermission.getAction(),
+      childPermission.getResourceType(),
+      childPermission.getTargetId(),
       childPermission.getScope(),
-      childPermission.getResource(),
       childPermission.getDescription(),
       childPermission.getCreatedAt(),
       new Set([...childPermission.getParentPermissions(), parentPermissionId]),

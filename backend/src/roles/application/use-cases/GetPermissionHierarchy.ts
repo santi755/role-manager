@@ -59,8 +59,9 @@ export class GetPermissionHierarchy {
         descendants.push({
           id: potentialChild.getId().toString(),
           action: potentialChild.getAction().toString(),
-          scope: potentialChild.getScope().toData(),
-          resource: potentialChild.getResource().toString(),
+          resource_type: potentialChild.getResourceType().toString(),
+          target_id: potentialChild.getTargetId().toJSON(),
+          scope: potentialChild.getScope()?.toString() ?? null,
           description: potentialChild.getDescription(),
           createdAt: potentialChild.getCreatedAt(),
           parentPermissions: Array.from(
@@ -74,8 +75,9 @@ export class GetPermissionHierarchy {
       permission: {
         id: permission.getId().toString(),
         action: permission.getAction().toString(),
-        scope: permission.getScope().toData(),
-        resource: permission.getResource().toString(),
+        resource_type: permission.getResourceType().toString(),
+        target_id: permission.getTargetId().toJSON(),
+        scope: permission.getScope()?.toString() ?? null,
         description: permission.getDescription(),
         createdAt: permission.getCreatedAt(),
         parentPermissions: Array.from(permission.getParentPermissions()).map(
@@ -85,8 +87,9 @@ export class GetPermissionHierarchy {
       ancestors: ancestors.map((ancestor) => ({
         id: ancestor.getId().toString(),
         action: ancestor.getAction().toString(),
-        scope: ancestor.getScope().toData(),
-        resource: ancestor.getResource().toString(),
+        resource_type: ancestor.getResourceType().toString(),
+        target_id: ancestor.getTargetId().toJSON(),
+        scope: ancestor.getScope()?.toString() ?? null,
         description: ancestor.getDescription(),
         createdAt: ancestor.getCreatedAt(),
         parentPermissions: Array.from(ancestor.getParentPermissions()).map(

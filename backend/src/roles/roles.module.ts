@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RoleGraphService } from './domain/services/RoleGraphService';
 import { PermissionGraphService } from './domain/services/PermissionGraphService';
+import { PermissionEvaluator } from './domain/services/PermissionEvaluator';
 import { CreateRole } from './application/use-cases/CreateRole';
 import { SetRoleParent } from './application/use-cases/SetRoleParent';
 import { CreatePermission } from './application/use-cases/CreatePermission';
@@ -40,6 +41,7 @@ import { PermissionsController } from './infrastructure/controllers/PermissionsC
     // Domain Services
     RoleGraphService,
     PermissionGraphService,
+    PermissionEvaluator,
 
     // Repositories - MongoDB Implementation
     {
@@ -76,6 +78,7 @@ import { PermissionsController } from './infrastructure/controllers/PermissionsC
     'PermissionRepository',
     RoleGraphService,
     PermissionGraphService,
+    PermissionEvaluator,
     CreateRole,
     SetRoleParent,
     CreatePermission,

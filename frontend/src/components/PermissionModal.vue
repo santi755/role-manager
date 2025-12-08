@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import type { TargetScopeMode, ScopeLevel } from '../types/permission'
+import { ref, watch, computed, onMounted } from 'vue'
+import type { TargetScopeMode, ScopeLevel, CreatePermissionDto } from '../types/permission'
 
 const props = defineProps<{
   isOpen: boolean
@@ -16,6 +16,30 @@ const targetId = ref('')
 const scope = ref<ScopeLevel>('own')
 const isSubmitting = ref(false)
 const error = ref('')
+
+const availableActions = ref<string[]>([])
+const availableResourceTypes = ref<string[]>([])
+
+const fetchOptions = async () => {
+  try {
+    const response = await fetch('http://localhost:3000/api/permissions/options')
+    if (response.ok) {
+      const data = await response.json()
+      availableActions.value = data.actions
+      availableResourceTypes.value = data.resourceTypes
+      
+      // Set defaults if available
+      if (data.actions.length > 0) action.value = data.actions[0]
+      if (data.resourceTypes.length > 0) resourceType.value = data.resourceTypes[0]
+    }
+  } catch (err) {
+    console.error('Error fetching options:', err)
+  }
+}
+
+onMounted(() => {
+  fetchOptions()
+})
 
 const scopeLevels: { value: ScopeLevel; label: string }[] = [
   { value: 'own', label: 'Own' },
@@ -152,27 +176,33 @@ watch(
 
         <div class="form-group">
           <label for="action" class="form-label">Action</label>
-          <input
+          <select
             id="action"
             v-model="action"
-            type="text"
             class="input"
-            placeholder="e.g., read, write, delete, share"
             :disabled="isSubmitting"
-          />
-          <p class="form-hint">Any action that can be performed</p>
+          >
+            <option value="" disabled>Select an action</option>
+            <option v-for="opt in availableActions" :key="opt" :value="opt">
+              {{ opt }}
+            </option>
+          </select>
+          <p class="form-hint">Operation to perform</p>
         </div>
 
         <div class="form-group">
           <label for="resource-type" class="form-label">Resource Type</label>
-          <input
+          <select
             id="resource-type"
             v-model="resourceType"
-            type="text"
             class="input"
-            placeholder="e.g., project, document, user"
             :disabled="isSubmitting"
-          />
+          >
+            <option value="" disabled>Select a resource type</option>
+            <option v-for="opt in availableResourceTypes" :key="opt" :value="opt">
+              {{ opt }}
+            </option>
+          </select>
           <p class="form-hint">The type of resource this permission applies to</p>
         </div>
 

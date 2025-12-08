@@ -3,7 +3,8 @@ import { Permission } from '../../domain/Permission';
 import { PermissionId } from '../../domain/value-objects/PermissionId';
 import { Action } from '../../domain/value-objects/Action';
 import { Scope } from '../../domain/value-objects/Scope';
-import { Resource } from '../../domain/value-objects/Resource';
+import { ResourceType } from '../../domain/value-objects/ResourceType';
+import { TargetId } from '../../domain/value-objects/TargetId';
 import { PermissionRepository } from '../../domain/repositories/PermissionRepository';
 
 @Injectable()
@@ -20,14 +21,22 @@ export class InMemoryPermissionRepository implements PermissionRepository {
 
   async findByActionScopeResource(
     action: Action,
-    scope: Scope,
-    resource: Resource,
+    resourceType: ResourceType,
+    targetId: TargetId,
+    scope: Scope | null,
   ): Promise<Permission | null> {
     for (const permission of this.permissions.values()) {
+      const scopeMatch =
+        (scope === null && permission.getScope() === null) ||
+        (scope !== null &&
+          permission.getScope() !== null &&
+          permission.getScope()!.equals(scope));
+
       if (
         permission.getAction().equals(action) &&
-        permission.getScope().equals(scope) &&
-        permission.getResource().equals(resource)
+        permission.getResourceType().equals(resourceType) &&
+        permission.getTargetId().equals(targetId) &&
+        scopeMatch
       ) {
         return permission;
       }

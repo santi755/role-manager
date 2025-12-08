@@ -25,8 +25,9 @@ export class GetPermissionById {
     return {
       id: permission.getId().toString(),
       action: permission.getAction().toString(),
-      scope: permission.getScope().toData(),
-      resource: permission.getResource().toString(),
+      resource_type: permission.getResourceType().toString(),
+      target_id: permission.getTargetId().toJSON(),
+      scope: permission.getScope()?.toString() ?? null,
       description: permission.getDescription(),
       createdAt: permission.getCreatedAt(),
       parentPermissions: Array.from(permission.getParentPermissions()).map(

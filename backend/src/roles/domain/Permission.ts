@@ -3,6 +3,8 @@ import { Action } from './value-objects/Action';
 import { Scope } from './value-objects/Scope';
 import { ResourceType } from './value-objects/ResourceType';
 import { TargetId } from './value-objects/TargetId';
+import { PermissionContext } from './value-objects/PermissionContext';
+import type { PermissionEvaluator } from './services/PermissionEvaluator';
 
 /**
  * Permission represents an authorization rule with:
@@ -185,5 +187,20 @@ export class Permission {
 
     // 4. Otherwise, no implication
     return false;
+  }
+
+  /**
+   * Check if this permission applies in a specific runtime context.
+   * This method delegates to the PermissionEvaluator service.
+   *
+   * @param context The runtime context (user, action, resource, etc.)
+   * @param evaluator The evaluator service to use
+   * @returns true if this permission grants access in the given context
+   */
+  appliesTo(
+    context: PermissionContext,
+    evaluator: PermissionEvaluator,
+  ): boolean {
+    return evaluator.evaluate(this, context);
   }
 }

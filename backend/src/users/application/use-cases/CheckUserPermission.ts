@@ -4,21 +4,36 @@ import type { RoleRepository } from '../../../roles/domain/repositories/RoleRepo
 import type { PermissionRepository } from '../../../roles/domain/repositories/PermissionRepository';
 import { UserId } from '../../domain/value-objects/UserId';
 import { Action } from '../../../roles/domain/value-objects/Action';
-import { Resource } from '../../../roles/domain/value-objects/Resource';
+import { ResourceType } from '../../../roles/domain/value-objects/ResourceType';
 import { RoleGraphService } from '../../../roles/domain/services/RoleGraphService';
 import { PermissionGraphService } from '../../../roles/domain/services/PermissionGraphService';
+import { PermissionEvaluator } from '../../../roles/domain/services/PermissionEvaluator';
+import { PermissionContext } from '../../../roles/domain/value-objects/PermissionContext';
 
 export interface CheckUserPermissionQuery {
   userId: string;
   resource: string;
   action: string;
+  // Context parameters for scope evaluation
+  resourceOwnerId?: string;
+  teamId?: string;
+  organizationId?: string;
+  resourceId?: string;
 }
 
 export interface CheckUserPermissionResult {
   hasPermission: boolean;
   reason: string;
+  grantedBy?: string;
 }
 
+/**
+ * CheckUserPermission evaluates whether a user has permission to perform
+ * an action on a resource in a specific context.
+ *
+ * This use case now uses PermissionEvaluator for context-aware evaluation,
+ * supporting dynamic scopes (own/team/org/global) and specific targets.
+ */
 @Injectable()
 export class CheckUserPermission {
   constructor(
@@ -30,32 +45,41 @@ export class CheckUserPermission {
     private readonly permissionRepository: PermissionRepository,
     private readonly roleGraphService: RoleGraphService,
     private readonly permissionGraphService: PermissionGraphService,
+    private readonly permissionEvaluator: PermissionEvaluator,
   ) {}
 
   async execute(
     query: CheckUserPermissionQuery,
   ): Promise<CheckUserPermissionResult> {
     const userId = UserId.fromString(query.userId);
-    const requestedAction = Action.fromString(query.action);
-    const requestedResource = Resource.create(query.resource);
 
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new Error(`User with id ${query.userId} not found`);
     }
 
-    // Check for direct permission denial (highest priority)
+    // Build permission context for evaluation
+    const context: PermissionContext = {
+      userId: query.userId,
+      action: Action.fromString(query.action),
+      resource: ResourceType.create(query.resource),
+      resourceOwnerId: query.resourceOwnerId,
+      teamId: query.teamId,
+      organizationId: query.organizationId,
+      resourceId: query.resourceId,
+    };
+
+    // Load all permissions for mapping
     const allPermissions = await this.permissionRepository.findAll();
     const permissionsMap = new Map(
       allPermissions.map((p) => [p.getId().toString(), p]),
     );
 
+    // Check for direct permission denial (highest priority)
     for (const permission of allPermissions) {
-      if (
-        permission.getAction().equals(requestedAction) &&
-        permission.getResource().equals(requestedResource)
-      ) {
-        if (user.hasDirectPermissionDenial(permission.getId())) {
+      if (user.hasDirectPermissionDenial(permission.getId())) {
+        // Evaluate if this denial applies in the current context
+        if (this.permissionEvaluator.evaluate(permission, context)) {
           return {
             hasPermission: false,
             reason: 'Direct permission denial',
@@ -66,14 +90,13 @@ export class CheckUserPermission {
 
     // Check for direct permission grant
     for (const permission of allPermissions) {
-      if (
-        permission.getAction().equals(requestedAction) &&
-        permission.getResource().equals(requestedResource)
-      ) {
-        if (user.hasDirectPermissionGrant(permission.getId())) {
+      if (user.hasDirectPermissionGrant(permission.getId())) {
+        // Evaluate if this grant applies in the current context
+        if (this.permissionEvaluator.evaluate(permission, context)) {
           return {
             hasPermission: true,
             reason: 'Direct permission grant',
+            grantedBy: permission.getId().toString(),
           };
         }
       }
@@ -102,29 +125,18 @@ export class CheckUserPermission {
         rolesMap,
       );
 
-    // Check if any effective permission matches the requested resource:action
+    // Evaluate each effective permission in the current context
     for (const permissionId of effectivePermissions) {
       const permission = permissionsMap.get(permissionId.toString());
+
       if (
         permission &&
-        permission.getAction().equals(requestedAction) &&
-        permission.getResource().equals(requestedResource)
+        this.permissionEvaluator.evaluate(permission, context)
       ) {
         return {
           hasPermission: true,
           reason: 'Permission granted through role assignment',
-        };
-      }
-
-      // Check for wildcard matches on resource
-      if (
-        permission &&
-        permission.getAction().equals(requestedAction) &&
-        requestedResource.matches(permission.getResource())
-      ) {
-        return {
-          hasPermission: true,
-          reason: 'Permission granted through wildcard role assignment',
+          grantedBy: permission.getId().toString(),
         };
       }
     }

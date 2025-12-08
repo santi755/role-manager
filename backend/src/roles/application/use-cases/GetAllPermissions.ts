@@ -4,6 +4,9 @@ import { PermissionDto } from '../dto/PermissionDto';
 
 export interface GetAllPermissionsQuery {
   resource_type?: string;
+  action?: string;
+  scope?: string;
+  target_type?: 'specific' | 'wildcard' | 'none';
 }
 
 @Injectable()
@@ -21,11 +24,42 @@ export class GetAllPermissions {
       const permissions = await this.permissionRepository.findAll();
       this.logger.log(`Found ${permissions.length} permissions`);
 
-      const filteredPermissions = query?.resource_type
-        ? permissions.filter(
-            (p) => p.getResourceType().toString() === query.resource_type,
-          )
-        : permissions;
+      // Apply filters
+      let filteredPermissions = permissions;
+
+      if (query?.resource_type) {
+        filteredPermissions = filteredPermissions.filter(
+          (p) => p.getResourceType().toString() === query.resource_type,
+        );
+      }
+
+      if (query?.action) {
+        filteredPermissions = filteredPermissions.filter(
+          (p) => p.getAction().toString() === query.action,
+        );
+      }
+
+      if (query?.scope) {
+        filteredPermissions = filteredPermissions.filter(
+          (p) => p.getScope()?.toString() === query.scope,
+        );
+      }
+
+      if (query?.target_type) {
+        filteredPermissions = filteredPermissions.filter((p) => {
+          const targetId = p.getTargetId();
+          switch (query.target_type) {
+            case 'specific':
+              return targetId.isSpecific();
+            case 'wildcard':
+              return targetId.isWildcard();
+            case 'none':
+              return targetId.isNone();
+            default:
+              return true;
+          }
+        });
+      }
 
       this.logger.log(
         `Mapping ${filteredPermissions.length} permissions to DTOs`,

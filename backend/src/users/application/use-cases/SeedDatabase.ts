@@ -78,218 +78,218 @@ export class SeedDatabase {
       // User Management - Global scope
       {
         action: 'create',
-        scope: { level: 'global' as const },
-        resource: 'users',
+        scope: 'global',
+        resource_type: 'users',
         description: 'Create new users',
       },
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'users',
+        scope: 'global',
+        resource_type: 'users',
         description: 'View user details',
       },
       {
         action: 'update',
-        scope: { level: 'global' as const },
-        resource: 'users',
+        scope: 'global',
+        resource_type: 'users',
         description: 'Update user information',
       },
       {
         action: 'delete',
-        scope: { level: 'global' as const },
-        resource: 'users',
+        scope: 'global',
+        resource_type: 'users',
         description: 'Delete users',
       },
 
       // Project Management - Global scope
       {
         action: 'create',
-        scope: { level: 'global' as const },
-        resource: 'projects',
+        scope: 'global',
+        resource_type: 'projects',
         description: 'Create new projects',
       },
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'projects',
+        scope: 'global',
+        resource_type: 'projects',
         description: 'View project details',
       },
       {
         action: 'update',
-        scope: { level: 'global' as const },
-        resource: 'projects',
+        scope: 'global',
+        resource_type: 'projects',
         description: 'Update project information',
       },
       {
         action: 'delete',
-        scope: { level: 'global' as const },
-        resource: 'projects',
+        scope: 'global',
+        resource_type: 'projects',
         description: 'Delete projects',
       },
 
       // Code Repository - Global scope
       {
         action: 'create',
-        scope: { level: 'global' as const },
-        resource: 'repositories',
+        scope: 'global',
+        resource_type: 'repositories',
         description: 'Create new repositories',
       },
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'repositories',
+        scope: 'global',
+        resource_type: 'repositories',
         description: 'View repository code',
       },
       {
         action: 'update',
-        scope: { level: 'global' as const },
-        resource: 'repositories',
+        scope: 'global',
+        resource_type: 'repositories',
         description: 'Push code to repositories',
       },
       {
         action: 'delete',
-        scope: { level: 'global' as const },
-        resource: 'repositories',
+        scope: 'global',
+        resource_type: 'repositories',
         description: 'Delete repositories',
       },
 
       // Deployment - Global scope
       {
         action: 'create',
-        scope: { level: 'global' as const },
-        resource: 'deployments',
+        scope: 'global',
+        resource_type: 'deployments',
         description: 'Create deployments',
       },
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'deployments',
+        scope: 'global',
+        resource_type: 'deployments',
         description: 'View deployment status',
       },
       {
         action: 'execute',
-        scope: { level: 'global' as const },
-        resource: 'deployments',
+        scope: 'global',
+        resource_type: 'deployments',
         description: 'Execute deployments',
       },
 
       // Infrastructure - Global scope
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'infrastructure',
+        scope: 'global',
+        resource_type: 'infrastructure',
         description: 'View infrastructure',
       },
       {
         action: 'manage',
-        scope: { level: 'global' as const },
-        resource: 'infrastructure',
+        scope: 'global',
+        resource_type: 'infrastructure',
         description: 'Manage infrastructure',
       },
 
       // Design Assets - Global scope
       {
         action: 'create',
-        scope: { level: 'global' as const },
-        resource: 'designs',
+        scope: 'global',
+        resource_type: 'designs',
         description: 'Create design assets',
       },
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'designs',
+        scope: 'global',
+        resource_type: 'designs',
         description: 'View design assets',
       },
       {
         action: 'update',
-        scope: { level: 'global' as const },
-        resource: 'designs',
+        scope: 'global',
+        resource_type: 'designs',
         description: 'Update design assets',
       },
       {
         action: 'delete',
-        scope: { level: 'global' as const },
-        resource: 'designs',
+        scope: 'global',
+        resource_type: 'designs',
         description: 'Delete design assets',
       },
 
       // Analytics & Reports - Global scope
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'analytics',
+        scope: 'global',
+        resource_type: 'analytics',
         description: 'View analytics',
       },
       {
         action: 'create',
-        scope: { level: 'global' as const },
-        resource: 'reports',
+        scope: 'global',
+        resource_type: 'reports',
         description: 'Create reports',
       },
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'reports',
+        scope: 'global',
+        resource_type: 'reports',
         description: 'View reports',
       },
 
       // Billing & Finance - Global scope
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'billing',
+        scope: 'global',
+        resource_type: 'billing',
         description: 'View billing information',
       },
       {
         action: 'manage',
-        scope: { level: 'global' as const },
-        resource: 'billing',
+        scope: 'global',
+        resource_type: 'billing',
         description: 'Manage billing and payments',
       },
 
       // Settings & Configuration - Global scope
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'settings',
+        scope: 'global',
+        resource_type: 'settings',
         description: 'View system settings',
       },
       {
         action: 'update',
-        scope: { level: 'global' as const },
-        resource: 'settings',
+        scope: 'global',
+        resource_type: 'settings',
         description: 'Update system settings',
       },
 
       // Roles & Permissions - Global scope
       {
         action: 'create',
-        scope: { level: 'global' as const },
-        resource: 'roles',
+        scope: 'global',
+        resource_type: 'roles',
         description: 'Create new roles',
       },
       {
         action: 'read',
-        scope: { level: 'global' as const },
-        resource: 'roles',
+        scope: 'global',
+        resource_type: 'roles',
         description: 'View roles',
       },
       {
         action: 'update',
-        scope: { level: 'global' as const },
-        resource: 'roles',
+        scope: 'global',
+        resource_type: 'roles',
         description: 'Update roles',
       },
       {
         action: 'delete',
-        scope: { level: 'global' as const },
-        resource: 'roles',
+        scope: 'global',
+        resource_type: 'roles',
         description: 'Delete roles',
       },
       {
         action: 'manage',
-        scope: { level: 'global' as const },
-        resource: 'permissions',
+        scope: 'global',
+        resource_type: 'permissions',
         description: 'Manage permissions',
       },
     ];
@@ -300,10 +300,10 @@ export class SeedDatabase {
       const permission = await this.createPermission.execute({
         action: def.action,
         scope: def.scope,
-        resource: def.resource,
+        resource_type: def.resource_type,
         description: def.description,
       });
-      const key = `${def.resource}:${def.action}:${def.scope.level}`;
+      const key = `${def.resource_type}:${def.action}:${def.scope}`;
       permissions[key] = permission;
     }
 

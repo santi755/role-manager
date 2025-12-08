@@ -19,6 +19,8 @@ import { CreatePermissionDto } from '../../application/dto/CreatePermissionDto';
 import { SetPermissionParentDto } from '../../application/dto/SetPermissionParentDto';
 import { PermissionDto } from '../../application/dto/PermissionDto';
 import { PermissionHierarchyDto } from '../../application/dto/PermissionHierarchyDto';
+import { COMMON_ACTIONS } from '../../domain/value-objects/Action';
+import { COMMON_RESOURCE_TYPES } from '../../domain/value-objects/ResourceType';
 
 @Controller('api/permissions')
 // Trigger rebuild
@@ -32,14 +34,23 @@ export class PermissionsController {
     private readonly getPermissionHierarchy: GetPermissionHierarchy,
   ) {}
 
+  @Get('options')
+  async getOptions(): Promise<{ actions: string[]; resourceTypes: string[] }> {
+    return {
+      actions: Object.values(COMMON_ACTIONS),
+      resourceTypes: Object.values(COMMON_RESOURCE_TYPES),
+    };
+  }
+
   @Post()
   async create(@Body() dto: CreatePermissionDto): Promise<PermissionDto> {
     const permission = await this.createPermission.execute(dto);
     return {
       id: permission.getId().toString(),
       action: permission.getAction().toString(),
-      scope: permission.getScope().toData(),
-      resource: permission.getResource().toString(),
+      resource_type: permission.getResourceType().toString(),
+      target_id: permission.getTargetId().toJSON(),
+      scope: permission.getScope()?.toString() ?? null,
       description: permission.getDescription(),
       createdAt: permission.getCreatedAt(),
       parentPermissions: Array.from(permission.getParentPermissions()).map(
@@ -51,8 +62,16 @@ export class PermissionsController {
   @Get()
   async findAll(
     @Query('resource') resource?: string,
+    @Query('action') action?: string,
+    @Query('scope') scope?: string,
+    @Query('target_type') targetType?: 'specific' | 'wildcard' | 'none',
   ): Promise<PermissionDto[]> {
-    return this.getAllPermissions.execute({ resource });
+    return this.getAllPermissions.execute({
+      resource_type: resource,
+      action,
+      scope,
+      target_type: targetType,
+    });
   }
 
   @Get(':id')
