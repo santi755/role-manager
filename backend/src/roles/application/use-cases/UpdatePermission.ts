@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { PermissionRepository } from '../../domain/repositories/PermissionRepository';
+import type { PermissionRepository } from '../../domain/repositories/PermissionRepository';
 import { PermissionId } from '../../domain/value-objects/PermissionId';
 import { Action } from '../../domain/value-objects/Action';
 import { ResourceType } from '../../domain/value-objects/ResourceType';
@@ -24,8 +24,8 @@ export class UpdatePermission {
     }
 
     // Determine new values or keep existing
-    const action = dto.action 
-      ? Action.create(dto.action) 
+    const action = dto.action
+      ? Action.create(dto.action)
       : existingPermission.getAction();
     
     const resourceType = dto.resource_type
@@ -56,7 +56,10 @@ export class UpdatePermission {
       }
     }
     
-    const description = dto.description !== undefined ? dto.description : existingPermission.getDescription();
+    const description =
+      dto.description !== undefined
+        ? dto.description
+        : existingPermission.getDescription();
 
     // Reconstitute with new values
     const updatedPermission = Permission.reconstitute(

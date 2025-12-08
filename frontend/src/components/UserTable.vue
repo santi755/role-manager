@@ -1,0 +1,268 @@
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import {
+  useVueTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  FlexRender,
+  type ColumnDef,
+  type SortingState,
+} from '@tanstack/vue-table'
+
+interface User {
+  id: string
+  name: string
+  email: string
+  createdAt: string
+  assignedRoles: string[]
+}
+
+const props = defineProps<{
+  // trigger refresh
+}>()
+
+const emit = defineEmits(['manage-roles'])
+
+const users = ref<User[]>([])
+const loading = ref(false)
+const sorting = ref<SortingState>([])
+const filter = ref('')
+
+const fetchUsers = async () => {
+  loading.value = true
+  try {
+    const res = await fetch('http://localhost:3000/api/users')
+    if (res.ok) {
+        users.value = await res.json()
+    }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchUsers()
+})
+
+const columns = computed<ColumnDef<User>[]>(() => [
+  {
+    accessorKey: 'name',
+    header: 'Name',
+    cell: info => info.getValue(),
+  },
+  {
+    accessorKey: 'email',
+    header: 'Email',
+    cell: info => info.getValue(),
+  },
+  {
+    accessorKey: 'assignedRoles',
+    header: 'Assigned Roles',
+    cell: ({ getValue }) => {
+      const roles = getValue<string[]>()
+      if (!roles || roles.length === 0) return '-'
+      return roles.join(', ')
+    },
+  },
+  {
+    id: 'actions',
+    header: 'Actions',
+    cell: () => null // Handled in template
+  }
+])
+
+const table = useVueTable({
+  get data() { return users.value },
+  get columns() { return columns.value },
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+  getFilteredRowModel: getFilteredRowModel(),
+  getPaginationRowModel: getPaginationRowModel(),
+  state: {
+    get sorting() { return sorting.value },
+    get globalFilter() { return filter.value },
+  },
+  onSortingChange: updater => sorting.value = typeof updater === 'function' ? updater(sorting.value) : updater,
+})
+
+defineExpose({ refresh: fetchUsers })
+</script>
+
+<template>
+  <div class="user-table-container">
+    <div class="controls">
+      <input 
+        v-model="filter" 
+        placeholder="Search users..." 
+        class="search-input"
+      />
+    </div>
+
+    <div class="table-wrapper">
+      <table class="user-table">
+        <thead>
+          <tr v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
+            <th v-for="header in headerGroup.headers" :key="header.id" @click="header.column.getToggleSortingHandler()?.($event)">
+              <template v-if="!header.isPlaceholder">
+                <FlexRender :render="header.column.columnDef.header" :props="header.getContext()" />
+                <span v-if="header.column.getIsSorted()">
+                  {{ header.column.getIsSorted() === 'asc' ? ' ↑' : ' ↓' }}
+                </span>
+              </template>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+           <tr v-if="loading">
+             <td colspan="4" style="text-align:center; padding: 20px;">Loading...</td>
+           </tr>
+           <tr v-else-if="users.length === 0">
+             <td colspan="4" style="text-align:center; padding: 20px;">No users found.</td>
+           </tr>
+           <tr v-else v-for="row in table.getRowModel().rows" :key="row.id" class="user-row">
+             <td v-for="cell in row.getVisibleCells()" :key="cell.id">
+               <template v-if="cell.column.id === 'actions'">
+                  <div class="action-buttons">
+                    <button @click="$emit('manage-roles', row.original)" class="btn-sm btn-primary-outline">Manage Roles</button>
+                  </div>
+               </template>
+               <template v-else-if="cell.column.id === 'assignedRoles'">
+                 <div class="roles-list">
+                   <span v-for="role in (cell.getValue() as string[])" :key="role" class="role-badge">
+                     {{ role }}
+                   </span>
+                   <span v-if="!(cell.getValue() as string[])?.length" class="text-muted">-</span>
+                 </div>
+               </template>
+               <template v-else>
+                  <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+               </template>
+             </td>
+           </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.user-table-container {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.controls {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  flex-shrink: 0;
+}
+
+.search-input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  width: 300px;
+  font-size: var(--font-size-sm);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.user-table th {
+  background-color: var(--color-background);
+  padding: var(--space-3) var(--space-6);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  white-space: nowrap;
+  
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.user-table td {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.user-row:hover {
+  background-color: var(--color-background-elevated);
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.btn-sm {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--transition-base);
+}
+
+.btn-primary-outline {
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  background: transparent;
+}
+
+.btn-primary-outline:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.roles-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.role-badge {
+  background-color: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.text-muted {
+  color: var(--color-text-secondary);
+}
+</style>

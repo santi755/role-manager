@@ -9,6 +9,7 @@ import { RouterView, RouterLink } from 'vue-router'
       <div class="nav-links">
         <RouterLink to="/roles" class="nav-link">Roles Graph</RouterLink>
         <RouterLink to="/permissions" class="nav-link">Permissions</RouterLink>
+        <RouterLink to="/users" class="nav-link">Users</RouterLink>
       </div>
     </nav>
     

@@ -8,10 +8,13 @@ import { SetRoleParent } from '../../../roles/application/use-cases/SetRoleParen
 import { GrantPermissionToRole } from '../../../roles/application/use-cases/GrantPermissionToRole';
 import { Role } from '../../../roles/domain/Role';
 import { Permission } from '../../../roles/domain/Permission';
+import { CreateUser } from './CreateUser';
+import { AssignRoleToUser } from './AssignRoleToUser';
 
 export interface SeedDataResult {
   rolesCreated: number;
   permissionsCreated: number;
+  usersCreated: number;
   message: string;
 }
 
@@ -28,6 +31,8 @@ export class SeedDatabase {
     private readonly createPermission: CreatePermission,
     private readonly setRoleParent: SetRoleParent,
     private readonly grantPermissionToRole: GrantPermissionToRole,
+    private readonly createUser: CreateUser,
+    private readonly assignRoleToUser: AssignRoleToUser,
   ) {}
 
   async execute(): Promise<SeedDataResult> {
@@ -46,9 +51,13 @@ export class SeedDatabase {
     // 5. Grant permissions to roles
     await this.grantPermissionsToRoles(roles, permissions);
 
+    // 6. Create users and assign roles
+    const usersCreated = await this.createUsers(roles);
+
     return {
       rolesCreated: Object.keys(roles).length,
       permissionsCreated: Object.keys(permissions).length,
+      usersCreated,
       message: 'Database seeded successfully with tech enterprise roles and permissions',
     };
   }
@@ -312,15 +321,36 @@ export class SeedDatabase {
 
   private async createRoles(): Promise<Record<string, Role>> {
     const roleDefinitions = [
-      { name: 'CTO', description: 'Chief Technology Officer - Full system access' },
-      { name: 'Engineering Manager', description: 'Manages engineering teams and projects' },
-      { name: 'Project Manager', description: 'Manages projects and team coordination' },
-      { name: 'Tech Lead', description: 'Technical leadership and code review' },
-      { name: 'Senior Developer', description: 'Experienced developer with deployment rights' },
+      {
+        name: 'CTO',
+        description: 'Chief Technology Officer - Full system access',
+      },
+      {
+        name: 'Engineering Manager',
+        description: 'Manages engineering teams and projects',
+      },
+      {
+        name: 'Project Manager',
+        description: 'Manages projects and team coordination',
+      },
+      {
+        name: 'Tech Lead',
+        description: 'Technical leadership and code review',
+      },
+      {
+        name: 'Senior Developer',
+        description: 'Experienced developer with deployment rights',
+      },
       { name: 'Developer', description: 'Software developer' },
       { name: 'Junior Developer', description: 'Entry-level developer' },
-      { name: 'DevOps Engineer', description: 'Infrastructure and deployment specialist' },
-      { name: 'Design Lead', description: 'Leads design team and approves designs' },
+      {
+        name: 'DevOps Engineer',
+        description: 'Infrastructure and deployment specialist',
+      },
+      {
+        name: 'Design Lead',
+        description: 'Leads design team and approves designs',
+      },
       { name: 'Designer', description: 'Creates and updates design assets' },
       { name: 'QA Engineer', description: 'Quality assurance and testing' },
       { name: 'Viewer', description: 'Read-only access to most resources' },
@@ -484,7 +514,32 @@ export class SeedDatabase {
     await grant('Project Manager', 'report:create:global');
 
     // QA Engineer - Testing and staging
-    await grant('QA Engineer', 'deployment:execute:global');
     await grant('QA Engineer', 'repository:read:global');
+  }
+
+  private async createUsers(roles: Record<string, Role>): Promise<number> {
+    let count = 0;
+    const roleNames = Object.keys(roles);
+
+    for (const roleName of roleNames) {
+      const email = `${roleName.toLowerCase().replace(/ /g, '.')}@example.com`;
+      const name = `${roleName} User`;
+
+      // Create user
+      const user = await this.createUser.execute({
+        name,
+        email,
+      });
+
+      // Assign role
+      await this.assignRoleToUser.execute({
+        userId: user.getId().toString(),
+        roleId: roles[roleName].getId().toString(),
+      });
+
+      count++;
+    }
+
+    return count;
   }
 }
