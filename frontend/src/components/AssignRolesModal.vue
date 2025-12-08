@@ -51,32 +51,19 @@ const handleSave = async () => {
   if (!props.user) return
   saving.value = true
   
-  const originalRoles = props.user.assignedRoles
-  const newRoles = selectedRoles.value
-  
-  const rolesToAdd = newRoles.filter(r => !originalRoles.includes(r))
-  const rolesToRemove = originalRoles.filter(r => !newRoles.includes(r))
-  
   try {
-    const promises = []
-    
-    for (const roleId of rolesToAdd) {
-      promises.push(fetch(`http://localhost:3000/api/users/${props.user.id}/roles`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ roleId })
-      }))
+    const res = await fetch(`http://localhost:3000/api/users/${props.user.id}/roles/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ roleIds: selectedRoles.value })
+    })
+
+    if (!res.ok) {
+      throw new Error('Failed to save roles')
     }
     
-    for (const roleId of rolesToRemove) {
-      promises.push(fetch(`http://localhost:3000/api/users/${props.user.id}/roles/${roleId}`, {
-        method: 'DELETE'
-      }))
-    }
-    
-    await Promise.all(promises)
     emit('saved')
     emit('close')
   } catch (e) {

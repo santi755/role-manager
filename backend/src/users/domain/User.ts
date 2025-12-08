@@ -102,6 +102,11 @@ export class User {
     this.assignedRoles.delete(roleId);
   }
 
+  syncRoles(roleIds: RoleId[]): void {
+    this.assignedRoles.clear();
+    roleIds.forEach((roleId) => this.assignedRoles.add(roleId));
+  }
+
   hasRole(roleId: RoleId): boolean {
     return Array.from(this.assignedRoles).some((r) => r.equals(roleId));
   }

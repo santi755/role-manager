@@ -15,9 +15,11 @@ import { GetUserRoles } from '../../application/use-cases/GetUserRoles';
 import { GetUserPermissions } from '../../application/use-cases/GetUserPermissions';
 import { AssignRoleToUser } from '../../application/use-cases/AssignRoleToUser';
 import { UnassignRoleFromUser } from '../../application/use-cases/UnassignRoleFromUser';
+import { SyncUserRoles } from '../../application/use-cases/SyncUserRoles';
 import { CheckUserPermission } from '../../application/use-cases/CheckUserPermission';
 import { CreateUserDto } from '../../application/dto/CreateUserDto';
 import { AssignRoleDto } from '../../application/dto/AssignRoleDto';
+import { SyncUserRolesDto } from '../../application/dto/SyncUserRolesDto';
 import { CheckPermissionDto } from '../../application/dto/CheckPermissionDto';
 import { UserDto } from '../../application/dto/UserDto';
 import { RoleDto } from '../../../roles/application/dto/RoleDto';
@@ -34,6 +36,7 @@ export class UsersController {
     private readonly assignRoleToUser: AssignRoleToUser,
     private readonly unassignRoleFromUser: UnassignRoleFromUser,
     private readonly checkUserPermission: CheckUserPermission,
+    private readonly syncUserRoles: SyncUserRoles,
   ) {}
 
   @Post()
@@ -103,6 +106,18 @@ export class UsersController {
       userId: id,
       resource: dto.resource,
       action: dto.action,
+    });
+  }
+
+  @Post(':id/roles/sync')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async syncRoles(
+    @Param('id') id: string,
+    @Body() dto: SyncUserRolesDto,
+  ): Promise<void> {
+    await this.syncUserRoles.execute({
+      userId: id,
+      roleIds: dto.roleIds,
     });
   }
 }

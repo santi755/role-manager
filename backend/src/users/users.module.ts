@@ -9,6 +9,7 @@ import { GetUserById } from './application/use-cases/GetUserById';
 import { GetUserRoles } from './application/use-cases/GetUserRoles';
 import { GetUserPermissions } from './application/use-cases/GetUserPermissions';
 import { UnassignRoleFromUser } from './application/use-cases/UnassignRoleFromUser';
+import { SyncUserRoles } from './application/use-cases/SyncUserRoles';
 import { SeedDatabase } from './application/use-cases/SeedDatabase';
 import { MongoUserRepository } from './infrastructure/repositories/MongoUserRepository';
 import { UserDocument, UserSchema } from './infrastructure/schemas/user.schema';
@@ -34,6 +35,7 @@ import { SeedController } from './infrastructure/controllers/SeedController';
     CreateUser,
     AssignRoleToUser,
     UnassignRoleFromUser,
+    SyncUserRoles,
 
     // Query Use Cases
     GetAllUsers,
