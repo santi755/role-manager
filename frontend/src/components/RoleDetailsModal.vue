@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
+import type { Permission } from '../types/permission'
 
 const props = defineProps<{
   role: { id: string; name: string; description: string; permissions: string[] } | null
@@ -8,8 +9,8 @@ const props = defineProps<{
 
 const emit = defineEmits(['close', 'delete', 'refresh'])
 
-const permissions = ref([])
-const availablePermissions = ref([])
+const permissions = ref<Permission[]>([])
+const availablePermissions = ref<Permission[]>([])
 const selectedPermission = ref('')
 
 const fetchRolePermissions = async () => {
@@ -143,7 +144,7 @@ watch(
         <ul class="permission-list">
           <li v-for="perm in permissions" :key="perm.id" class="permission-item">
             <span class="permission-text">
-              <span class="text-primary">{{ perm.resource }}</span
+              <span class="text-primary">{{ perm.resource_type }}</span
               >:
               <span class="text-secondary">{{ perm.action }}</span>
             </span>
@@ -170,7 +171,7 @@ watch(
           <select v-model="selectedPermission" class="input flex-1">
             <option disabled value="">Select permission to add</option>
             <option v-for="perm in availablePermissions" :key="perm.id" :value="perm.id">
-              {{ perm.resource }}: {{ perm.action }}
+              {{ perm.resource_type }}: {{ perm.action }}
             </option>
           </select>
           <button @click="addPermission" class="btn btn-primary" :disabled="!selectedPermission">

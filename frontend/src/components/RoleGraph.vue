@@ -336,8 +336,8 @@ const handleConfirm = () => {
   closeConfirmDialog()
 }
 
-const handlePermissionCreated = (permission: { resource: string; action: string }) => {
-  success(`Permission created: ${permission.resource}:${permission.action}`)
+const handlePermissionCreated = (permission: { resource_type: string; action: string }) => {
+  success(`Permission created: ${permission.resource_type}:${permission.action}`)
   if (viewMode.value === 'permissions') {
     fetchPermissions()
   }
