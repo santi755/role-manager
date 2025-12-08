@@ -28,6 +28,8 @@ import {
 } from './infrastructure/schemas/permission.schema';
 import { RolesController } from './infrastructure/controllers/RolesController';
 import { PermissionsController } from './infrastructure/controllers/PermissionsController';
+import { UpdatePermission } from './application/use-cases/UpdatePermission';
+import { DeletePermission } from './application/use-cases/DeletePermission';
 
 @Module({
   imports: [
@@ -61,6 +63,8 @@ import { PermissionsController } from './infrastructure/controllers/PermissionsC
     RevokePermissionFromRole,
     RemoveRoleParent,
     DeleteRole,
+    UpdatePermission,
+    DeletePermission,
 
     // Query Use Cases
     GetAllRoles,
@@ -86,6 +90,8 @@ import { PermissionsController } from './infrastructure/controllers/PermissionsC
     RevokePermissionFromRole,
     RemoveRoleParent,
     DeleteRole,
+    UpdatePermission,
+    DeletePermission,
     GetAllRoles,
     GetRoleById,
     GetRolePermissions,

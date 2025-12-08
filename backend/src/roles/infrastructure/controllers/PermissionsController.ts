@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Delete,
   Param,
   Body,
@@ -15,7 +16,10 @@ import { GetPermissionById } from '../../application/use-cases/GetPermissionById
 import { SetPermissionParent } from '../../application/use-cases/SetPermissionParent';
 import { RemovePermissionParent } from '../../application/use-cases/RemovePermissionParent';
 import { GetPermissionHierarchy } from '../../application/use-cases/GetPermissionHierarchy';
+import { UpdatePermission } from '../../application/use-cases/UpdatePermission';
+import { DeletePermission } from '../../application/use-cases/DeletePermission';
 import { CreatePermissionDto } from '../../application/dto/CreatePermissionDto';
+import { UpdatePermissionDto } from '../../application/dto/UpdatePermissionDto';
 import { SetPermissionParentDto } from '../../application/dto/SetPermissionParentDto';
 import { PermissionDto } from '../../application/dto/PermissionDto';
 import { PermissionHierarchyDto } from '../../application/dto/PermissionHierarchyDto';
@@ -32,6 +36,8 @@ export class PermissionsController {
     private readonly setPermissionParent: SetPermissionParent,
     private readonly removePermissionParent: RemovePermissionParent,
     private readonly getPermissionHierarchy: GetPermissionHierarchy,
+    private readonly updatePermission: UpdatePermission,
+    private readonly deletePermission: DeletePermission,
   ) {}
 
   @Get('options')
@@ -77,6 +83,32 @@ export class PermissionsController {
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<PermissionDto> {
     return this.getPermissionById.execute({ permissionId: id });
+  }
+
+  @Put(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePermissionDto,
+  ): Promise<PermissionDto> {
+    const permission = await this.updatePermission.execute(id, dto);
+    return {
+      id: permission.getId().toString(),
+      action: permission.getAction().toString(),
+      resource_type: permission.getResourceType().toString(),
+      target_id: permission.getTargetId().toJSON(),
+      scope: permission.getScope()?.toString() ?? null,
+      description: permission.getDescription(),
+      createdAt: permission.getCreatedAt(),
+      parentPermissions: Array.from(permission.getParentPermissions()).map(
+        (id) => id.toString(),
+      ),
+    };
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async delete(@Param('id') id: string): Promise<void> {
+    await this.deletePermission.execute(id);
   }
 
   @Get(':id/hierarchy')

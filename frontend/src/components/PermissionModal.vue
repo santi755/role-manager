@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
-import type { TargetScopeMode, ScopeLevel, CreatePermissionDto } from '../types/permission'
+import type { TargetScopeMode, ScopeLevel, CreatePermissionDto, Permission } from '../types/permission'
 
 const props = defineProps<{
   isOpen: boolean
+  permissionToEdit?: Permission | null
 }>()
 
-const emit = defineEmits(['close', 'created'])
+const emit = defineEmits(['close', 'saved'])
 
 const resourceType = ref('')
 const action = ref('')
@@ -27,10 +28,6 @@ const fetchOptions = async () => {
       const data = await response.json()
       availableActions.value = data.actions
       availableResourceTypes.value = data.resourceTypes
-      
-      // Set defaults if available
-      if (data.actions.length > 0) action.value = data.actions[0]
-      if (data.resourceTypes.length > 0) resourceType.value = data.resourceTypes[0]
     }
   } catch (err) {
     console.error('Error fetching options:', err)
@@ -49,13 +46,37 @@ const scopeLevels: { value: ScopeLevel; label: string }[] = [
 ]
 
 const resetForm = () => {
-  resourceType.value = ''
-  action.value = ''
+  resourceType.value = availableResourceTypes.value[0] || ''
+  action.value = availableActions.value[0] || ''
   description.value = ''
   targetScopeMode.value = 'scope'
   targetId.value = ''
   scope.value = 'own'
   error.value = ''
+}
+
+const populateForm = (perm: Permission) => {
+  resourceType.value = perm.resource_type
+  action.value = perm.action
+  description.value = perm.description || ''
+  
+  if (perm.target_id === '*') {
+    targetScopeMode.value = 'wildcard'
+    targetId.value = ''
+    scope.value = 'own'
+  } else if (perm.target_id) {
+    targetScopeMode.value = 'specific'
+    targetId.value = perm.target_id
+    scope.value = 'own'
+  } else if (perm.scope) {
+    targetScopeMode.value = 'scope'
+    targetId.value = ''
+    scope.value = perm.scope as ScopeLevel
+  } else {
+    // Default fallback
+    targetScopeMode.value = 'scope'
+    scope.value = 'own'
+  }
 }
 
 const permissionPreview = computed(() => {
@@ -74,7 +95,7 @@ const permissionPreview = computed(() => {
   return preview
 })
 
-const createPermission = async () => {
+const submitPermission = async () => {
   if (!resourceType.value.trim() || !action.value.trim()) {
     error.value = 'Resource type and action are required'
     return
@@ -109,24 +130,30 @@ const createPermission = async () => {
       payload.scope = scope.value
     }
 
-    const response = await fetch('http://localhost:3000/api/permissions', {
-      method: 'POST',
+    const isEditing = !!props.permissionToEdit
+    const url = isEditing 
+      ? `http://localhost:3000/api/permissions/${props.permissionToEdit.id}`
+      : 'http://localhost:3000/api/permissions'
+    const method = isEditing ? 'PUT' : 'POST'
+
+    const response = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
 
     if (!response.ok) {
       const errorData = await response.text()
-      throw new Error(errorData || 'Failed to create permission')
+      throw new Error(errorData || 'Failed to save permission')
     }
 
-    const newPermission = await response.json()
-    emit('created', newPermission)
+    const result = await response.json()
+    emit('saved', result)
     emit('close')
     resetForm()
   } catch (err) {
-    console.error('Error creating permission:', err)
-    error.value = err instanceof Error ? err.message : 'Failed to create permission'
+    console.error('Error saving permission:', err)
+    error.value = err instanceof Error ? err.message : 'Failed to save permission'
   } finally {
     isSubmitting.value = false
   }
@@ -135,8 +162,12 @@ const createPermission = async () => {
 watch(
   () => props.isOpen,
   (isOpen) => {
-    if (!isOpen) {
-      resetForm()
+    if (isOpen) {
+      if (props.permissionToEdit) {
+        populateForm(props.permissionToEdit)
+      } else {
+        resetForm()
+      }
     }
   },
 )
@@ -146,7 +177,7 @@ watch(
   <div v-if="isOpen" class="modal-backdrop" @click.self="$emit('close')">
     <div class="modal">
       <div class="modal-header">
-        <h2 class="modal-title">Create Permission</h2>
+        <h2 class="modal-title">{{ permissionToEdit ? 'Edit Permission' : 'Create Permission' }}</h2>
         <button @click="$emit('close')" class="btn btn-ghost btn-icon">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -299,9 +330,9 @@ watch(
         <button @click="$emit('close')" class="btn btn-secondary" :disabled="isSubmitting">
           Cancel
         </button>
-        <button @click="createPermission" class="btn btn-primary" :disabled="isSubmitting">
-          <span v-if="isSubmitting">Creating...</span>
-          <span v-else>Create Permission</span>
+        <button @click="submitPermission" class="btn btn-primary" :disabled="isSubmitting">
+          <span v-if="isSubmitting">Saving...</span>
+          <span v-else>{{ permissionToEdit ? 'Update' : 'Create' }} Permission</span>
         </button>
       </div>
     </div>
@@ -309,6 +340,67 @@ watch(
 </template>
 
 <style scoped>
+/* Reuse existing styles plus any new ones if needed. 
+   Assuming global styles or scoped styles from previous version flow through.
+   I'll include the CSS from the previous file to be safe.
+*/
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background-color: var(--color-background-elevated);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.modal-body {
+  padding: var(--space-6);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  background-color: var(--color-surface-alt);
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
 .form-group {
   margin-bottom: var(--space-5);
 }
@@ -325,6 +417,23 @@ watch(
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   margin-top: var(--space-2);
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  transition: all var(--transition-base);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .textarea {
@@ -407,9 +516,54 @@ watch(
   color: var(--color-primary);
 }
 
-.modal {
-  width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition-base);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-surface-hover);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+}
+
+.btn-ghost:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  padding: var(--space-2);
 }
 </style>
