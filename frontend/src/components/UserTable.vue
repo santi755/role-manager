@@ -44,9 +44,33 @@ const fetchUsers = async () => {
   }
 }
 
+interface Role {
+  id: string
+  name: string
+}
+
+const roles = ref<Role[]>([])
+
+const fetchRoles = async () => {
+  try {
+    const res = await fetch('http://localhost:3000/api/roles')
+    if (res.ok) {
+      roles.value = await res.json()
+    }
+  } catch (e) {
+    console.error('Failed to fetch roles', e)
+  }
+}
+
 onMounted(() => {
   fetchUsers()
+  fetchRoles()
 })
+
+const getRoleName = (roleId: string) => {
+  const role = roles.value.find(r => r.id === roleId)
+  return role ? role.name : roleId
+}
 
 const columns = computed<ColumnDef<User>[]>(() => [
   {
@@ -63,9 +87,9 @@ const columns = computed<ColumnDef<User>[]>(() => [
     accessorKey: 'assignedRoles',
     header: 'Assigned Roles',
     cell: ({ getValue }) => {
-      const roles = getValue<string[]>()
-      if (!roles || roles.length === 0) return '-'
-      return roles.join(', ')
+      const roleIds = getValue<string[]>()
+      if (!roleIds || roleIds.length === 0) return '-'
+      return roleIds.map(id => getRoleName(id)).join(', ')
     },
   },
   {
@@ -132,8 +156,8 @@ defineExpose({ refresh: fetchUsers })
                </template>
                <template v-else-if="cell.column.id === 'assignedRoles'">
                  <div class="roles-list">
-                   <span v-for="role in (cell.getValue() as string[])" :key="role" class="role-badge">
-                     {{ role }}
+                   <span v-for="roleId in (cell.getValue() as string[])" :key="roleId" class="role-badge">
+                     {{ getRoleName(roleId) }}
                    </span>
                    <span v-if="!(cell.getValue() as string[])?.length" class="text-muted">-</span>
                  </div>
