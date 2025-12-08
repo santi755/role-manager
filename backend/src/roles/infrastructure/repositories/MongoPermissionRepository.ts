@@ -3,7 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Permission } from '../../domain/Permission';
 import { PermissionId } from '../../domain/value-objects/PermissionId';
-import { ResourceAction } from '../../domain/value-objects/ResourceAction';
+import { Action } from '../../domain/value-objects/Action';
+import { Scope } from '../../domain/value-objects/Scope';
+import { Resource } from '../../domain/value-objects/Resource';
 import { PermissionRepository } from '../../domain/repositories/PermissionRepository';
 import { PermissionDocument } from '../schemas/permission.schema';
 
@@ -17,8 +19,9 @@ export class MongoPermissionRepository implements PermissionRepository {
   async save(permission: Permission): Promise<void> {
     const doc = {
       id: permission.getId().toString(),
-      resource: permission.getResourceAction().getResource(),
-      action: permission.getResourceAction().getAction(),
+      action: permission.getAction().toString(),
+      scope: permission.getScope().toData(),
+      resource: permission.getResource().toString(),
       description: permission.getDescription(),
       createdAt: permission.getCreatedAt(),
       parentPermissions: Array.from(permission.getParentPermissions()).map(
@@ -40,13 +43,17 @@ export class MongoPermissionRepository implements PermissionRepository {
     return this.toDomain(doc);
   }
 
-  async findByResourceAction(
-    resourceAction: ResourceAction,
+  async findByActionScopeResource(
+    action: Action,
+    scope: Scope,
+    resource: Resource,
   ): Promise<Permission | null> {
     const doc = await this.permissionModel
       .findOne({
-        resource: resourceAction.getResource(),
-        action: resourceAction.getAction(),
+        action: action.toString(),
+        'scope.level': scope.getLevel(),
+        'scope.target': scope.getTarget() || { $exists: false },
+        resource: resource.toString(),
       })
       .exec();
     if (!doc) return null;
@@ -73,7 +80,17 @@ export class MongoPermissionRepository implements PermissionRepository {
   private toDomain(doc: PermissionDocument): Permission {
     return Permission.reconstitute(
       PermissionId.fromString(doc.id),
-      ResourceAction.create(doc.resource, doc.action),
+      Action.fromString(doc.action),
+      Scope.fromData({
+        level: doc.scope.level as
+          | 'own'
+          | 'team'
+          | 'org'
+          | 'global'
+          | 'specific',
+        target: doc.scope.target,
+      }),
+      Resource.create(doc.resource),
       doc.description,
       doc.createdAt,
       new Set(doc.parentPermissions.map((p) => PermissionId.fromString(p))),

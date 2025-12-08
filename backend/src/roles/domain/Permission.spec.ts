@@ -1,17 +1,23 @@
 import { Permission } from '../../../src/roles/domain/Permission';
 import { PermissionId } from '../../../src/roles/domain/value-objects/PermissionId';
-import { ResourceAction } from '../../../src/roles/domain/value-objects/ResourceAction';
+import { Action } from '../../../src/roles/domain/value-objects/Action';
+import { Scope } from '../../../src/roles/domain/value-objects/Scope';
+import { Resource } from '../../../src/roles/domain/value-objects/Resource';
 
 describe('Permission Entity - Critical Bug Fixes', () => {
   describe('addParentPermission', () => {
     it('should prevent adding the same parent permission twice', () => {
       // Arrange
       const permission = Permission.create(
-        ResourceAction.create('users', 'read'),
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
         'Read users',
       );
       const parentPermission = Permission.create(
-        ResourceAction.create('users', 'view'),
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
         'View users',
       );
       const parentId = parentPermission.getId();
@@ -32,7 +38,9 @@ describe('Permission Entity - Critical Bug Fixes', () => {
     it('should prevent permission from being its own parent', () => {
       // Arrange
       const permission = Permission.create(
-        ResourceAction.create('users', 'read'),
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
         'Read users',
       );
 
@@ -45,15 +53,21 @@ describe('Permission Entity - Critical Bug Fixes', () => {
     it('should allow adding different parent permissions', () => {
       // Arrange
       const permission = Permission.create(
-        ResourceAction.create('users', 'read'),
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
         'Read users',
       );
       const parent1 = Permission.create(
-        ResourceAction.create('users', 'view'),
+        Action.fromString('update'),
+        Scope.global(),
+        Resource.create('users'),
         'View users',
       );
       const parent2 = Permission.create(
-        ResourceAction.create('users', 'list'),
+        Action.fromString('delete'),
+        Scope.global(),
+        Resource.create('users'),
         'List users',
       );
 
@@ -72,11 +86,15 @@ describe('Permission Entity - Critical Bug Fixes', () => {
     it('should successfully remove a parent permission using value equality', () => {
       // Arrange
       const permission = Permission.create(
-        ResourceAction.create('users', 'read'),
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
         'Read users',
       );
       const parentPermission = Permission.create(
-        ResourceAction.create('users', 'view'),
+        Action.fromString('update'),
+        Scope.global(),
+        Resource.create('users'),
         'View users',
       );
       const parentId = parentPermission.getId();
@@ -96,7 +114,9 @@ describe('Permission Entity - Critical Bug Fixes', () => {
     it('should handle removing non-existent parent gracefully', () => {
       // Arrange
       const permission = Permission.create(
-        ResourceAction.create('users', 'read'),
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
         'Read users',
       );
       const nonExistentId = PermissionId.create();
@@ -111,15 +131,21 @@ describe('Permission Entity - Critical Bug Fixes', () => {
     it('should remove only the specified parent when multiple exist', () => {
       // Arrange
       const permission = Permission.create(
-        ResourceAction.create('users', 'read'),
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
         'Read users',
       );
       const parent1 = Permission.create(
-        ResourceAction.create('users', 'view'),
+        Action.fromString('update'),
+        Scope.global(),
+        Resource.create('users'),
         'View users',
       );
       const parent2 = Permission.create(
-        ResourceAction.create('users', 'list'),
+        Action.fromString('delete'),
+        Scope.global(),
+        Resource.create('users'),
         'List users',
       );
 
@@ -146,7 +172,9 @@ describe('Permission Entity - Critical Bug Fixes', () => {
 
       const permission = Permission.reconstitute(
         permissionId,
-        ResourceAction.create('users', 'read'),
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
         'Read users',
         new Date(),
         existingParents,
@@ -158,6 +186,65 @@ describe('Permission Entity - Critical Bug Fixes', () => {
 
       // Assert
       expect(permission.getParentPermissions().size).toBe(1);
+    });
+  });
+
+  describe('implies - permission hierarchy', () => {
+    it('should return true when manage action implies read action', () => {
+      // Arrange
+      const managePermission = Permission.create(
+        Action.fromString('manage'),
+        Scope.global(),
+        Resource.create('users'),
+        'Manage users',
+      );
+      const readPermission = Permission.create(
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
+        'Read users',
+      );
+
+      // Act & Assert
+      expect(managePermission.implies(readPermission)).toBe(true);
+    });
+
+    it('should return true when global scope implies org scope', () => {
+      // Arrange
+      const globalPermission = Permission.create(
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
+        'Read all users',
+      );
+      const orgPermission = Permission.create(
+        Action.fromString('read'),
+        Scope.org(),
+        Resource.create('users'),
+        'Read org users',
+      );
+
+      // Act & Assert
+      expect(globalPermission.implies(orgPermission)).toBe(true);
+    });
+
+    it('should return false when resources are different', () => {
+      // Arrange
+      const usersPermission = Permission.create(
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('users'),
+        'Read users',
+      );
+      const projectsPermission = Permission.create(
+        Action.fromString('read'),
+        Scope.global(),
+        Resource.create('projects'),
+        'Read projects',
+      );
+
+      // Act & Assert
+      expect(usersPermission.implies(projectsPermission)).toBe(false);
     });
   });
 });

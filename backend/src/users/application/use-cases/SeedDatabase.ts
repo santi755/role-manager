@@ -75,79 +75,235 @@ export class SeedDatabase {
 
   private async createPermissions(): Promise<Record<string, Permission>> {
     const permissionDefinitions = [
-      // User Management
-      { resource: 'users', action: 'create', description: 'Create new users' },
-      { resource: 'users', action: 'read', description: 'View user details' },
-      { resource: 'users', action: 'update', description: 'Update user information' },
-      { resource: 'users', action: 'delete', description: 'Delete users' },
-      { resource: 'users', action: 'list', description: 'List all users' },
+      // User Management - Global scope
+      {
+        action: 'create',
+        scope: { level: 'global' as const },
+        resource: 'users',
+        description: 'Create new users',
+      },
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'users',
+        description: 'View user details',
+      },
+      {
+        action: 'update',
+        scope: { level: 'global' as const },
+        resource: 'users',
+        description: 'Update user information',
+      },
+      {
+        action: 'delete',
+        scope: { level: 'global' as const },
+        resource: 'users',
+        description: 'Delete users',
+      },
 
-      // Project Management
-      { resource: 'projects', action: 'create', description: 'Create new projects' },
-      { resource: 'projects', action: 'read', description: 'View project details' },
-      { resource: 'projects', action: 'update', description: 'Update project information' },
-      { resource: 'projects', action: 'delete', description: 'Delete projects' },
-      { resource: 'projects', action: 'list', description: 'List all projects' },
-      { resource: 'projects', action: 'assign', description: 'Assign team members to projects' },
+      // Project Management - Global scope
+      {
+        action: 'create',
+        scope: { level: 'global' as const },
+        resource: 'projects',
+        description: 'Create new projects',
+      },
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'projects',
+        description: 'View project details',
+      },
+      {
+        action: 'update',
+        scope: { level: 'global' as const },
+        resource: 'projects',
+        description: 'Update project information',
+      },
+      {
+        action: 'delete',
+        scope: { level: 'global' as const },
+        resource: 'projects',
+        description: 'Delete projects',
+      },
 
-      // Code Repository
-      { resource: 'repositories', action: 'create', description: 'Create new repositories' },
-      { resource: 'repositories', action: 'read', description: 'View repository code' },
-      { resource: 'repositories', action: 'write', description: 'Push code to repositories' },
-      { resource: 'repositories', action: 'delete', description: 'Delete repositories' },
-      { resource: 'repositories', action: 'merge', description: 'Merge pull requests' },
-      { resource: 'repositories', action: 'review', description: 'Review code changes' },
+      // Code Repository - Global scope
+      {
+        action: 'create',
+        scope: { level: 'global' as const },
+        resource: 'repositories',
+        description: 'Create new repositories',
+      },
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'repositories',
+        description: 'View repository code',
+      },
+      {
+        action: 'update',
+        scope: { level: 'global' as const },
+        resource: 'repositories',
+        description: 'Push code to repositories',
+      },
+      {
+        action: 'delete',
+        scope: { level: 'global' as const },
+        resource: 'repositories',
+        description: 'Delete repositories',
+      },
 
-      // Deployment
-      { resource: 'deployments', action: 'create', description: 'Create deployments' },
-      { resource: 'deployments', action: 'read', description: 'View deployment status' },
-      { resource: 'deployments', action: 'production', description: 'Deploy to production' },
-      { resource: 'deployments', action: 'staging', description: 'Deploy to staging' },
-      { resource: 'deployments', action: 'rollback', description: 'Rollback deployments' },
+      // Deployment - Global scope
+      {
+        action: 'create',
+        scope: { level: 'global' as const },
+        resource: 'deployments',
+        description: 'Create deployments',
+      },
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'deployments',
+        description: 'View deployment status',
+      },
+      {
+        action: 'execute',
+        scope: { level: 'global' as const },
+        resource: 'deployments',
+        description: 'Execute deployments',
+      },
 
-      // Infrastructure
-      { resource: 'infrastructure', action: 'read', description: 'View infrastructure' },
-      { resource: 'infrastructure', action: 'manage', description: 'Manage infrastructure' },
-      { resource: 'infrastructure', action: 'configure', description: 'Configure servers and services' },
+      // Infrastructure - Global scope
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'infrastructure',
+        description: 'View infrastructure',
+      },
+      {
+        action: 'manage',
+        scope: { level: 'global' as const },
+        resource: 'infrastructure',
+        description: 'Manage infrastructure',
+      },
 
-      // Design Assets
-      { resource: 'designs', action: 'create', description: 'Create design assets' },
-      { resource: 'designs', action: 'read', description: 'View design assets' },
-      { resource: 'designs', action: 'update', description: 'Update design assets' },
-      { resource: 'designs', action: 'delete', description: 'Delete design assets' },
-      { resource: 'designs', action: 'approve', description: 'Approve design changes' },
+      // Design Assets - Global scope
+      {
+        action: 'create',
+        scope: { level: 'global' as const },
+        resource: 'designs',
+        description: 'Create design assets',
+      },
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'designs',
+        description: 'View design assets',
+      },
+      {
+        action: 'update',
+        scope: { level: 'global' as const },
+        resource: 'designs',
+        description: 'Update design assets',
+      },
+      {
+        action: 'delete',
+        scope: { level: 'global' as const },
+        resource: 'designs',
+        description: 'Delete design assets',
+      },
 
-      // Analytics & Reports
-      { resource: 'analytics', action: 'read', description: 'View analytics' },
-      { resource: 'analytics', action: 'export', description: 'Export analytics data' },
-      { resource: 'reports', action: 'create', description: 'Create reports' },
-      { resource: 'reports', action: 'read', description: 'View reports' },
+      // Analytics & Reports - Global scope
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'analytics',
+        description: 'View analytics',
+      },
+      {
+        action: 'create',
+        scope: { level: 'global' as const },
+        resource: 'reports',
+        description: 'Create reports',
+      },
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'reports',
+        description: 'View reports',
+      },
 
-      // Billing & Finance
-      { resource: 'billing', action: 'read', description: 'View billing information' },
-      { resource: 'billing', action: 'manage', description: 'Manage billing and payments' },
+      // Billing & Finance - Global scope
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'billing',
+        description: 'View billing information',
+      },
+      {
+        action: 'manage',
+        scope: { level: 'global' as const },
+        resource: 'billing',
+        description: 'Manage billing and payments',
+      },
 
-      // Settings & Configuration
-      { resource: 'settings', action: 'read', description: 'View system settings' },
-      { resource: 'settings', action: 'update', description: 'Update system settings' },
+      // Settings & Configuration - Global scope
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'settings',
+        description: 'View system settings',
+      },
+      {
+        action: 'update',
+        scope: { level: 'global' as const },
+        resource: 'settings',
+        description: 'Update system settings',
+      },
 
-      // Roles & Permissions
-      { resource: 'roles', action: 'create', description: 'Create new roles' },
-      { resource: 'roles', action: 'read', description: 'View roles' },
-      { resource: 'roles', action: 'update', description: 'Update roles' },
-      { resource: 'roles', action: 'delete', description: 'Delete roles' },
-      { resource: 'permissions', action: 'manage', description: 'Manage permissions' },
+      // Roles & Permissions - Global scope
+      {
+        action: 'create',
+        scope: { level: 'global' as const },
+        resource: 'roles',
+        description: 'Create new roles',
+      },
+      {
+        action: 'read',
+        scope: { level: 'global' as const },
+        resource: 'roles',
+        description: 'View roles',
+      },
+      {
+        action: 'update',
+        scope: { level: 'global' as const },
+        resource: 'roles',
+        description: 'Update roles',
+      },
+      {
+        action: 'delete',
+        scope: { level: 'global' as const },
+        resource: 'roles',
+        description: 'Delete roles',
+      },
+      {
+        action: 'manage',
+        scope: { level: 'global' as const },
+        resource: 'permissions',
+        description: 'Manage permissions',
+      },
     ];
 
     const permissions: Record<string, Permission> = {};
 
     for (const def of permissionDefinitions) {
       const permission = await this.createPermission.execute({
-        resource: def.resource,
         action: def.action,
+        scope: def.scope,
+        resource: def.resource,
         description: def.description,
       });
-      const key = `${def.resource}:${def.action}`;
+      const key = `${def.resource}:${def.action}:${def.scope.level}`;
       permissions[key] = permission;
     }
 
@@ -266,82 +422,69 @@ export class SeedDatabase {
     };
 
     // Viewer - Read-only access
-    await grant('Viewer', 'projects:read');
-    await grant('Viewer', 'projects:list');
-    await grant('Viewer', 'repositories:read');
-    await grant('Viewer', 'deployments:read');
-    await grant('Viewer', 'designs:read');
-    await grant('Viewer', 'analytics:read');
-    await grant('Viewer', 'reports:read');
-    await grant('Viewer', 'users:read');
-    await grant('Viewer', 'users:list');
+    await grant('Viewer', 'projects:read:global');
+    await grant('Viewer', 'repositories:read:global');
+    await grant('Viewer', 'deployments:read:global');
+    await grant('Viewer', 'designs:read:global');
+    await grant('Viewer', 'analytics:read:global');
+    await grant('Viewer', 'reports:read:global');
+    await grant('Viewer', 'users:read:global');
 
     // Junior Developer - Basic development permissions
-    await grant('Junior Developer', 'repositories:write');
-    await grant('Junior Developer', 'deployments:staging');
+    await grant('Junior Developer', 'repositories:update:global');
+    await grant('Junior Developer', 'deployments:execute:global');
 
     // Developer - Full development permissions
-    await grant('Developer', 'repositories:review');
-    await grant('Developer', 'projects:update');
+    await grant('Developer', 'projects:update:global');
 
     // Senior Developer - Advanced development + deployment
-    await grant('Senior Developer', 'repositories:merge');
-    await grant('Senior Developer', 'repositories:create');
-    await grant('Senior Developer', 'deployments:create');
-    await grant('Senior Developer', 'deployments:rollback');
+    await grant('Senior Developer', 'repositories:create:global');
+    await grant('Senior Developer', 'deployments:create:global');
 
     // Tech Lead - Code review + project management
-    await grant('Tech Lead', 'projects:create');
-    await grant('Tech Lead', 'projects:assign');
-    await grant('Tech Lead', 'repositories:delete');
-    await grant('Tech Lead', 'users:update');
+    await grant('Tech Lead', 'projects:create:global');
+    await grant('Tech Lead', 'repositories:delete:global');
+    await grant('Tech Lead', 'users:update:global');
 
     // Engineering Manager - Team and resource management
-    await grant('Engineering Manager', 'users:create');
-    await grant('Engineering Manager', 'projects:delete');
-    await grant('Engineering Manager', 'analytics:export');
-    await grant('Engineering Manager', 'reports:create');
+    await grant('Engineering Manager', 'users:create:global');
+    await grant('Engineering Manager', 'projects:delete:global');
+    await grant('Engineering Manager', 'reports:create:global');
 
     // CTO - Full access
-    await grant('CTO', 'users:delete');
-    await grant('CTO', 'infrastructure:read');
-    await grant('CTO', 'infrastructure:manage');
-    await grant('CTO', 'infrastructure:configure');
-    await grant('CTO', 'billing:read');
-    await grant('CTO', 'billing:manage');
-    await grant('CTO', 'settings:read');
-    await grant('CTO', 'settings:update');
-    await grant('CTO', 'roles:create');
-    await grant('CTO', 'roles:read');
-    await grant('CTO', 'roles:update');
-    await grant('CTO', 'roles:delete');
-    await grant('CTO', 'permissions:manage');
-    await grant('CTO', 'deployments:production');
+    await grant('CTO', 'users:delete:global');
+    await grant('CTO', 'infrastructure:read:global');
+    await grant('CTO', 'infrastructure:manage:global');
+    await grant('CTO', 'billing:read:global');
+    await grant('CTO', 'billing:manage:global');
+    await grant('CTO', 'settings:read:global');
+    await grant('CTO', 'settings:update:global');
+    await grant('CTO', 'roles:create:global');
+    await grant('CTO', 'roles:read:global');
+    await grant('CTO', 'roles:update:global');
+    await grant('CTO', 'roles:delete:global');
+    await grant('CTO', 'permissions:manage:global');
+    await grant('CTO', 'deployments:execute:global');
 
     // DevOps Engineer - Infrastructure and deployment
-    await grant('DevOps Engineer', 'infrastructure:read');
-    await grant('DevOps Engineer', 'infrastructure:manage');
-    await grant('DevOps Engineer', 'infrastructure:configure');
-    await grant('DevOps Engineer', 'deployments:production');
+    await grant('DevOps Engineer', 'infrastructure:read:global');
+    await grant('DevOps Engineer', 'infrastructure:manage:global');
+    await grant('DevOps Engineer', 'deployments:execute:global');
 
     // Designer - Design assets
-    await grant('Designer', 'designs:create');
-    await grant('Designer', 'designs:update');
+    await grant('Designer', 'designs:create:global');
+    await grant('Designer', 'designs:update:global');
 
     // Design Lead - Design management
-    await grant('Design Lead', 'designs:delete');
-    await grant('Design Lead', 'designs:approve');
+    await grant('Design Lead', 'designs:delete:global');
 
     // Project Manager - Project coordination
-    await grant('Project Manager', 'projects:create');
-    await grant('Project Manager', 'projects:update');
-    await grant('Project Manager', 'projects:assign');
-    await grant('Project Manager', 'reports:create');
-    await grant('Project Manager', 'analytics:export');
+    await grant('Project Manager', 'projects:create:global');
+    await grant('Project Manager', 'projects:update:global');
+    await grant('Project Manager', 'reports:create:global');
 
     // QA Engineer - Testing and staging
-    await grant('QA Engineer', 'deployments:staging');
-    await grant('QA Engineer', 'repositories:read');
-    await grant('QA Engineer', 'repositories:review');
+    await grant('QA Engineer', 'deployments:execute:global');
+    await grant('QA Engineer', 'repositories:read:global');
   }
 }

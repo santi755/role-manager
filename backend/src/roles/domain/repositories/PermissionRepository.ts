@@ -1,12 +1,16 @@
 import { Permission } from '../Permission';
 import { PermissionId } from '../value-objects/PermissionId';
-import { ResourceAction } from '../value-objects/ResourceAction';
+import { Action } from '../value-objects/Action';
+import { Scope } from '../value-objects/Scope';
+import { Resource } from '../value-objects/Resource';
 
 export interface PermissionRepository {
   save(permission: Permission): Promise<void>;
   findById(id: PermissionId): Promise<Permission | null>;
-  findByResourceAction(
-    resourceAction: ResourceAction,
+  findByActionScopeResource(
+    action: Action,
+    scope: Scope,
+    resource: Resource,
   ): Promise<Permission | null>;
   findAll(): Promise<Permission[]>;
   findByIds(ids: PermissionId[]): Promise<Permission[]>;

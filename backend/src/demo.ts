@@ -27,39 +27,44 @@ async function bootstrap() {
     // 1. Create Permissions
     console.log('\n📝 Creating Permissions...');
     const viewUsersPermission = await createPermission.execute({
+      action: 'read',
+      scope: { level: 'global' },
       resource: 'users',
-      action: 'view',
       description: 'View users',
     });
-    console.log(`  ✓ Created: users:view`);
+    console.log(`  ✓ Created: users:read:global`);
 
     const editUsersPermission = await createPermission.execute({
+      action: 'update',
+      scope: { level: 'global' },
       resource: 'users',
-      action: 'edit',
       description: 'Edit users',
     });
-    console.log(`  ✓ Created: users:edit`);
+    console.log(`  ✓ Created: users:update:global`);
 
     const deleteUsersPermission = await createPermission.execute({
-      resource: 'users',
       action: 'delete',
+      scope: { level: 'global' },
+      resource: 'users',
       description: 'Delete users',
     });
-    console.log(`  ✓ Created: users:delete`);
+    console.log(`  ✓ Created: users:delete:global`);
 
     const viewPostsPermission = await createPermission.execute({
+      action: 'read',
+      scope: { level: 'global' },
       resource: 'posts',
-      action: 'view',
       description: 'View posts',
     });
-    console.log(`  ✓ Created: posts:view`);
+    console.log(`  ✓ Created: posts:read:global`);
 
     const editPostsPermission = await createPermission.execute({
+      action: 'update',
+      scope: { level: 'global' },
       resource: 'posts',
-      action: 'edit',
       description: 'Edit posts',
     });
-    console.log(`  ✓ Created: posts:edit`);
+    console.log(`  ✓ Created: posts:update:global`);
 
     // 2. Create Roles
     console.log('\n👥 Creating Roles...');
@@ -179,19 +184,19 @@ async function bootstrap() {
     let result = await checkUserPermission.execute({
       userId: alice.getId().toString(),
       resource: 'users',
-      action: 'view',
+      action: 'read',
     });
     console.log(
-      `  users:view → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
+      `  users:read → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
     );
 
     result = await checkUserPermission.execute({
       userId: alice.getId().toString(),
       resource: 'users',
-      action: 'edit',
+      action: 'update',
     });
     console.log(
-      `  users:edit → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
+      `  users:update → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
     );
 
     // Bob (Editor inherits from Viewer)
@@ -199,19 +204,19 @@ async function bootstrap() {
     result = await checkUserPermission.execute({
       userId: bob.getId().toString(),
       resource: 'users',
-      action: 'view',
+      action: 'read',
     });
     console.log(
-      `  users:view → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
+      `  users:read → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
     );
 
     result = await checkUserPermission.execute({
       userId: bob.getId().toString(),
       resource: 'users',
-      action: 'edit',
+      action: 'update',
     });
     console.log(
-      `  users:edit → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
+      `  users:update → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
     );
 
     result = await checkUserPermission.execute({
@@ -228,19 +233,19 @@ async function bootstrap() {
     result = await checkUserPermission.execute({
       userId: charlie.getId().toString(),
       resource: 'users',
-      action: 'view',
+      action: 'read',
     });
     console.log(
-      `  users:view → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
+      `  users:read → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
     );
 
     result = await checkUserPermission.execute({
       userId: charlie.getId().toString(),
       resource: 'users',
-      action: 'edit',
+      action: 'update',
     });
     console.log(
-      `  users:edit → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
+      `  users:update → ${result.hasPermission ? '✓ GRANTED' : '✗ DENIED'} (${result.reason})`,
     );
 
     result = await checkUserPermission.execute({

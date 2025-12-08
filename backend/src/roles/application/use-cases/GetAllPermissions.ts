@@ -18,14 +18,15 @@ export class GetAllPermissions {
 
     const filteredPermissions = query?.resource
       ? permissions.filter(
-          (p) => p.getResourceAction().getResource() === query.resource,
+          (p) => p.getResource().toString() === query.resource,
         )
       : permissions;
 
     return filteredPermissions.map((permission) => ({
       id: permission.getId().toString(),
-      resource: permission.getResourceAction().getResource(),
-      action: permission.getResourceAction().getAction(),
+      action: permission.getAction().toString(),
+      scope: permission.getScope().toData(),
+      resource: permission.getResource().toString(),
       description: permission.getDescription(),
       createdAt: permission.getCreatedAt(),
       parentPermissions: Array.from(permission.getParentPermissions()).map(

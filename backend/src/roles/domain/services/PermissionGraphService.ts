@@ -168,7 +168,9 @@ export class PermissionGraphService {
     // Create a temporary copy to test
     const testPermission = Permission.reconstitute(
       childPermission.getId(),
-      childPermission.getResourceAction(),
+      childPermission.getAction(),
+      childPermission.getScope(),
+      childPermission.getResource(),
       childPermission.getDescription(),
       childPermission.getCreatedAt(),
       new Set([...childPermission.getParentPermissions(), parentPermissionId]),

@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Permission } from '../../domain/Permission';
 import { PermissionId } from '../../domain/value-objects/PermissionId';
-import { ResourceAction } from '../../domain/value-objects/ResourceAction';
+import { Action } from '../../domain/value-objects/Action';
+import { Scope } from '../../domain/value-objects/Scope';
+import { Resource } from '../../domain/value-objects/Resource';
 import { PermissionRepository } from '../../domain/repositories/PermissionRepository';
 
 @Injectable()
@@ -16,11 +18,17 @@ export class InMemoryPermissionRepository implements PermissionRepository {
     return this.permissions.get(id.toString()) || null;
   }
 
-  async findByResourceAction(
-    resourceAction: ResourceAction,
+  async findByActionScopeResource(
+    action: Action,
+    scope: Scope,
+    resource: Resource,
   ): Promise<Permission | null> {
     for (const permission of this.permissions.values()) {
-      if (permission.getResourceAction().equals(resourceAction)) {
+      if (
+        permission.getAction().equals(action) &&
+        permission.getScope().equals(scope) &&
+        permission.getResource().equals(resource)
+      ) {
         return permission;
       }
     }
