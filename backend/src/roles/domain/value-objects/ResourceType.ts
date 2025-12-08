@@ -11,6 +11,14 @@ export const COMMON_RESOURCE_TYPES = {
   FOLDER: 'folder',
   ORGANIZATION: 'organization',
   TEAM: 'team',
+  REPOSITORY: 'repository',
+  DEPLOYMENT: 'deployment',
+  INFRASTRUCTURE: 'infrastructure',
+  DESIGN: 'design',
+  ANALYTICS: 'analytics',
+  REPORT: 'report',
+  BILLING: 'billing',
+  SETTINGS: 'settings',
 } as const;
 
 export class ResourceType {

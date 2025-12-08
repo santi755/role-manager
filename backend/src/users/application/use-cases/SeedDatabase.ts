@@ -79,25 +79,25 @@ export class SeedDatabase {
       {
         action: 'create',
         scope: 'global',
-        resource_type: 'users',
+        resource_type: 'user',
         description: 'Create new users',
       },
       {
         action: 'read',
         scope: 'global',
-        resource_type: 'users',
+        resource_type: 'user',
         description: 'View user details',
       },
       {
         action: 'update',
         scope: 'global',
-        resource_type: 'users',
+        resource_type: 'user',
         description: 'Update user information',
       },
       {
         action: 'delete',
         scope: 'global',
-        resource_type: 'users',
+        resource_type: 'user',
         description: 'Delete users',
       },
 
@@ -105,25 +105,25 @@ export class SeedDatabase {
       {
         action: 'create',
         scope: 'global',
-        resource_type: 'projects',
+        resource_type: 'project',
         description: 'Create new projects',
       },
       {
         action: 'read',
         scope: 'global',
-        resource_type: 'projects',
+        resource_type: 'project',
         description: 'View project details',
       },
       {
         action: 'update',
         scope: 'global',
-        resource_type: 'projects',
+        resource_type: 'project',
         description: 'Update project information',
       },
       {
         action: 'delete',
         scope: 'global',
-        resource_type: 'projects',
+        resource_type: 'project',
         description: 'Delete projects',
       },
 
@@ -131,25 +131,25 @@ export class SeedDatabase {
       {
         action: 'create',
         scope: 'global',
-        resource_type: 'repositories',
+        resource_type: 'repository',
         description: 'Create new repositories',
       },
       {
         action: 'read',
         scope: 'global',
-        resource_type: 'repositories',
+        resource_type: 'repository',
         description: 'View repository code',
       },
       {
         action: 'update',
         scope: 'global',
-        resource_type: 'repositories',
+        resource_type: 'repository',
         description: 'Push code to repositories',
       },
       {
         action: 'delete',
         scope: 'global',
-        resource_type: 'repositories',
+        resource_type: 'repository',
         description: 'Delete repositories',
       },
 
@@ -157,19 +157,19 @@ export class SeedDatabase {
       {
         action: 'create',
         scope: 'global',
-        resource_type: 'deployments',
+        resource_type: 'deployment',
         description: 'Create deployments',
       },
       {
         action: 'read',
         scope: 'global',
-        resource_type: 'deployments',
+        resource_type: 'deployment',
         description: 'View deployment status',
       },
       {
         action: 'execute',
         scope: 'global',
-        resource_type: 'deployments',
+        resource_type: 'deployment',
         description: 'Execute deployments',
       },
 
@@ -191,25 +191,25 @@ export class SeedDatabase {
       {
         action: 'create',
         scope: 'global',
-        resource_type: 'designs',
+        resource_type: 'design',
         description: 'Create design assets',
       },
       {
         action: 'read',
         scope: 'global',
-        resource_type: 'designs',
+        resource_type: 'design',
         description: 'View design assets',
       },
       {
         action: 'update',
         scope: 'global',
-        resource_type: 'designs',
+        resource_type: 'design',
         description: 'Update design assets',
       },
       {
         action: 'delete',
         scope: 'global',
-        resource_type: 'designs',
+        resource_type: 'design',
         description: 'Delete design assets',
       },
 
@@ -223,13 +223,13 @@ export class SeedDatabase {
       {
         action: 'create',
         scope: 'global',
-        resource_type: 'reports',
+        resource_type: 'report',
         description: 'Create reports',
       },
       {
         action: 'read',
         scope: 'global',
-        resource_type: 'reports',
+        resource_type: 'report',
         description: 'View reports',
       },
 
@@ -265,31 +265,31 @@ export class SeedDatabase {
       {
         action: 'create',
         scope: 'global',
-        resource_type: 'roles',
+        resource_type: 'role',
         description: 'Create new roles',
       },
       {
         action: 'read',
         scope: 'global',
-        resource_type: 'roles',
+        resource_type: 'role',
         description: 'View roles',
       },
       {
         action: 'update',
         scope: 'global',
-        resource_type: 'roles',
+        resource_type: 'role',
         description: 'Update roles',
       },
       {
         action: 'delete',
         scope: 'global',
-        resource_type: 'roles',
+        resource_type: 'role',
         description: 'Delete roles',
       },
       {
         action: 'manage',
         scope: 'global',
-        resource_type: 'permissions',
+        resource_type: 'permission',
         description: 'Manage permissions',
       },
     ];
@@ -422,69 +422,69 @@ export class SeedDatabase {
     };
 
     // Viewer - Read-only access
-    await grant('Viewer', 'projects:read:global');
-    await grant('Viewer', 'repositories:read:global');
-    await grant('Viewer', 'deployments:read:global');
-    await grant('Viewer', 'designs:read:global');
+    await grant('Viewer', 'project:read:global');
+    await grant('Viewer', 'repository:read:global');
+    await grant('Viewer', 'deployment:read:global');
+    await grant('Viewer', 'design:read:global');
     await grant('Viewer', 'analytics:read:global');
-    await grant('Viewer', 'reports:read:global');
-    await grant('Viewer', 'users:read:global');
+    await grant('Viewer', 'report:read:global');
+    await grant('Viewer', 'user:read:global');
 
     // Junior Developer - Basic development permissions
-    await grant('Junior Developer', 'repositories:update:global');
-    await grant('Junior Developer', 'deployments:execute:global');
+    await grant('Junior Developer', 'repository:update:global');
+    await grant('Junior Developer', 'deployment:execute:global');
 
     // Developer - Full development permissions
-    await grant('Developer', 'projects:update:global');
+    await grant('Developer', 'project:update:global');
 
     // Senior Developer - Advanced development + deployment
-    await grant('Senior Developer', 'repositories:create:global');
-    await grant('Senior Developer', 'deployments:create:global');
+    await grant('Senior Developer', 'repository:create:global');
+    await grant('Senior Developer', 'deployment:create:global');
 
     // Tech Lead - Code review + project management
-    await grant('Tech Lead', 'projects:create:global');
-    await grant('Tech Lead', 'repositories:delete:global');
-    await grant('Tech Lead', 'users:update:global');
+    await grant('Tech Lead', 'project:create:global');
+    await grant('Tech Lead', 'repository:delete:global');
+    await grant('Tech Lead', 'user:update:global');
 
     // Engineering Manager - Team and resource management
-    await grant('Engineering Manager', 'users:create:global');
-    await grant('Engineering Manager', 'projects:delete:global');
-    await grant('Engineering Manager', 'reports:create:global');
+    await grant('Engineering Manager', 'user:create:global');
+    await grant('Engineering Manager', 'project:delete:global');
+    await grant('Engineering Manager', 'report:create:global');
 
     // CTO - Full access
-    await grant('CTO', 'users:delete:global');
+    await grant('CTO', 'user:delete:global');
     await grant('CTO', 'infrastructure:read:global');
     await grant('CTO', 'infrastructure:manage:global');
     await grant('CTO', 'billing:read:global');
     await grant('CTO', 'billing:manage:global');
     await grant('CTO', 'settings:read:global');
     await grant('CTO', 'settings:update:global');
-    await grant('CTO', 'roles:create:global');
-    await grant('CTO', 'roles:read:global');
-    await grant('CTO', 'roles:update:global');
-    await grant('CTO', 'roles:delete:global');
-    await grant('CTO', 'permissions:manage:global');
-    await grant('CTO', 'deployments:execute:global');
+    await grant('CTO', 'role:create:global');
+    await grant('CTO', 'role:read:global');
+    await grant('CTO', 'role:update:global');
+    await grant('CTO', 'role:delete:global');
+    await grant('CTO', 'permission:manage:global');
+    await grant('CTO', 'deployment:execute:global');
 
     // DevOps Engineer - Infrastructure and deployment
     await grant('DevOps Engineer', 'infrastructure:read:global');
     await grant('DevOps Engineer', 'infrastructure:manage:global');
-    await grant('DevOps Engineer', 'deployments:execute:global');
+    await grant('DevOps Engineer', 'deployment:execute:global');
 
     // Designer - Design assets
-    await grant('Designer', 'designs:create:global');
-    await grant('Designer', 'designs:update:global');
+    await grant('Designer', 'design:create:global');
+    await grant('Designer', 'design:update:global');
 
     // Design Lead - Design management
-    await grant('Design Lead', 'designs:delete:global');
+    await grant('Design Lead', 'design:delete:global');
 
     // Project Manager - Project coordination
-    await grant('Project Manager', 'projects:create:global');
-    await grant('Project Manager', 'projects:update:global');
-    await grant('Project Manager', 'reports:create:global');
+    await grant('Project Manager', 'project:create:global');
+    await grant('Project Manager', 'project:update:global');
+    await grant('Project Manager', 'report:create:global');
 
     // QA Engineer - Testing and staging
-    await grant('QA Engineer', 'deployments:execute:global');
-    await grant('QA Engineer', 'repositories:read:global');
+    await grant('QA Engineer', 'deployment:execute:global');
+    await grant('QA Engineer', 'repository:read:global');
   }
 }
