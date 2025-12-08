@@ -6,9 +6,13 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
+  getGroupedRowModel,
+  getExpandedRowModel,
   FlexRender,
   type ColumnDef,
   type SortingState,
+  type GroupingState,
+  type ExpandedState,
 } from '@tanstack/vue-table'
 
 interface Permission {
@@ -31,6 +35,8 @@ const emit = defineEmits(['edit', 'delete'])
 const permissions = ref<Permission[]>([])
 const loading = ref(false)
 const sorting = ref<SortingState>([])
+const grouping = ref<GroupingState>(['resource_type'])
+const expanded = ref<ExpandedState>(true) // default all expanded
 const filter = ref('')
 
 const fetchPermissions = async () => {
@@ -56,6 +62,7 @@ const columns = computed<ColumnDef<Permission>[]>(() => [
     accessorKey: 'resource_type',
     header: 'Resource',
     cell: info => info.getValue(),
+    enableGrouping: true, // explicit
   },
   {
     accessorKey: 'action',
@@ -91,11 +98,17 @@ const table = useVueTable({
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
   getFilteredRowModel: getFilteredRowModel(),
+  getGroupedRowModel: getGroupedRowModel(),
+  getExpandedRowModel: getExpandedRowModel(),
   state: {
     get sorting() { return sorting.value },
     get globalFilter() { return filter.value },
+    get grouping() { return grouping.value },
+    get expanded() { return expanded.value },
   },
   onSortingChange: updater => sorting.value = typeof updater === 'function' ? updater(sorting.value) : updater,
+  onGroupingChange: updater => grouping.value = typeof updater === 'function' ? updater(grouping.value) : updater,
+  onExpandedChange: updater => expanded.value = typeof updater === 'function' ? updater(expanded.value) : updater,
 })
 
 defineExpose({ refresh: fetchPermissions })
@@ -116,10 +129,23 @@ defineExpose({ refresh: fetchPermissions })
         <thead>
           <tr v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <th v-for="header in headerGroup.headers" :key="header.id" @click="header.column.getToggleSortingHandler()?.($event)">
-              <FlexRender :render="header.column.columnDef.header" :props="header.getContext()" />
-              <span v-if="header.column.getIsSorted()">
-                 {{ header.column.getIsSorted() === 'asc' ? ' ↑' : ' ↓' }}
-              </span>
+              <template v-if="!header.isPlaceholder">
+                <div v-if="header.column.getIsGrouped()">
+                  <!-- Hide header for grouped column if desired, or keep it. 
+                       Since we use group rows, the column header 'Resource' might still be useful for sorting 
+                       but the cells won't be in the leaf rows. -->
+                   <FlexRender :render="header.column.columnDef.header" :props="header.getContext()" />
+                   <span v-if="header.column.getIsSorted()">
+                      {{ header.column.getIsSorted() === 'asc' ? ' ↑' : ' ↓' }}
+                   </span>
+                </div>
+                <div v-else>
+                   <FlexRender :render="header.column.columnDef.header" :props="header.getContext()" />
+                   <span v-if="header.column.getIsSorted()">
+                      {{ header.column.getIsSorted() === 'asc' ? ' ↑' : ' ↓' }}
+                   </span>
+                </div>
+              </template>
             </th>
           </tr>
         </thead>
@@ -130,19 +156,45 @@ defineExpose({ refresh: fetchPermissions })
            <tr v-else-if="permissions.length === 0">
              <td colspan="5" style="text-align:center; padding: 20px;">No permissions found.</td>
            </tr>
-           <tr v-else v-for="row in table.getRowModel().rows" :key="row.id">
-             <td v-for="cell in row.getVisibleCells()" :key="cell.id">
-               <template v-if="cell.column.id === 'actions'">
-                  <div class="action-buttons">
-                    <button @click="$emit('edit', row.original)" class="btn-sm btn-edit">Edit</button>
-                    <button @click="$emit('delete', row.original)" class="btn-sm btn-delete">Delete</button>
-                  </div>
-               </template>
-               <template v-else>
-                  <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-               </template>
-             </td>
-           </tr>
+           <template v-else v-for="row in table.getRowModel().rows" :key="row.id">
+             <!-- Group Header Row -->
+             <tr v-if="row.getIsGrouped()" class="group-header" @click="row.getToggleExpandedHandler()?.($event)">
+               <td :colspan="row.getVisibleCells().length">
+                 <div class="group-cell-content">
+                    <button 
+                      class="btn-icon-sm"
+                      :class="{ 'expanded': row.getIsExpanded() }"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
+                    <span class="group-title">
+                      {{ row.getValue(row.groupingColumnId) }} 
+                      <span class="group-count">({{ row.subRows.length }})</span>
+                    </span>
+                 </div>
+               </td>
+             </tr>
+             
+             <!-- Normal Row (only show if not grouped, or if it's a leaf) -->
+             <tr v-else class="permission-row">
+               <td v-for="cell in row.getVisibleCells()" :key="cell.id">
+                 <template v-if="cell.column.getIsGrouped()">
+                   <!-- Empty cell for the grouped column in leaf rows (or we can hide the column entirely in leaf view) -->
+                 </template>
+                 <template v-else-if="cell.column.id === 'actions'">
+                    <div class="action-buttons">
+                      <button @click="$emit('edit', row.original)" class="btn-sm btn-edit">Edit</button>
+                      <button @click="$emit('delete', row.original)" class="btn-sm btn-delete">Delete</button>
+                    </div>
+                 </template>
+                 <template v-else>
+                    <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+                 </template>
+               </td>
+             </tr>
+           </template>
         </tbody>
       </table>
     </div>
@@ -156,7 +208,7 @@ defineExpose({ refresh: fetchPermissions })
   box-shadow: var(--shadow-md);
   overflow: hidden;
   border: 1px solid var(--color-border);
-  height: 100%; /* Fill available space */
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -185,8 +237,8 @@ defineExpose({ refresh: fetchPermissions })
 
 .table-wrapper {
   overflow-x: auto;
-  overflow-y: auto; /* Enable vertical scroll */
-  flex: 1; /* Take remaining height */
+  overflow-y: auto;
+  flex: 1;
 }
 
 .permission-table {
@@ -207,7 +259,6 @@ defineExpose({ refresh: fetchPermissions })
   cursor: pointer;
   white-space: nowrap;
   
-  /* Sticky Header */
   position: sticky;
   top: 0;
   z-index: 10;
@@ -220,8 +271,57 @@ defineExpose({ refresh: fetchPermissions })
   font-size: var(--font-size-sm);
 }
 
-.permission-table tbody tr:hover {
+/* Group Header Styles */
+.group-header {
   background-color: var(--color-surface-hover);
+  cursor: pointer;
+  font-weight: var(--font-weight-bold);
+}
+
+.group-header:hover {
+  background-color: var(--color-border);
+}
+
+.group-cell-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.group-title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.group-count {
+  color: var(--color-text-secondary);
+  font-weight: normal;
+  font-size: var(--font-size-xs);
+  margin-left: var(--space-1);
+}
+
+.btn-icon-sm {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.btn-icon-sm.expanded {
+  transform: rotate(90deg);
+}
+
+.permission-row:hover {
+  background-color: var(--color-background-elevated);
+}
+
+/* Indent leaf rows slightly or change background to distinguish */
+.permission-row td {
+  background-color: var(--color-surface); 
 }
 
 .action-buttons {
