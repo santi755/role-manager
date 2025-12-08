@@ -1,45 +1,57 @@
-export type ActionType = 'create' | 'read' | 'update' | 'delete' | 'execute' | 'manage';
+/**
+ * Common action types - can be extended with any string
+ */
+export const COMMON_ACTIONS = {
+  CREATE: 'create',
+  READ: 'read',
+  UPDATE: 'update',
+  DELETE: 'delete',
+  EXECUTE: 'execute',
+  MANAGE: 'manage',
+  SHARE: 'share',
+} as const;
 
+/**
+ * Action represents an operation that can be performed on a resource.
+ * Unlike the previous implementation, this is now flexible and accepts any string.
+ */
 export class Action {
-  private readonly type: ActionType;
+  private readonly value: string;
 
-  private constructor(type: ActionType) {
-    this.type = type;
+  private constructor(value: string) {
+    if (!value || value.trim().length === 0) {
+      throw new Error('Action value cannot be empty');
+    }
+    this.value = value.toLowerCase();
   }
 
-  static create(type: ActionType): Action {
-    return new Action(type);
+  static create(value: string): Action {
+    return new Action(value);
   }
 
   static fromString(value: string): Action {
-    const validActions: ActionType[] = ['create', 'read', 'update', 'delete', 'execute', 'manage'];
-    const type = value.toLowerCase() as ActionType;
-    
-    if (!validActions.includes(type)) {
-      throw new Error(`Invalid action type: ${value}. Must be one of: ${validActions.join(', ')}`);
-    }
-    
-    return new Action(type);
+    return new Action(value);
   }
 
-  getType(): ActionType {
-    return this.type;
+  getValue(): string {
+    return this.value;
   }
 
   toString(): string {
-    return this.type;
+    return this.value;
   }
 
   equals(other: Action): boolean {
-    return this.type === other.type;
+    return this.value === other.value;
   }
 
   /**
    * Check if this action implies another action.
    * The 'manage' action implies all other actions.
+   * Custom implication logic can be added based on action hierarchies.
    */
   implies(other: Action): boolean {
-    if (this.type === 'manage') {
+    if (this.value === COMMON_ACTIONS.MANAGE) {
       return true; // MANAGE implies all actions
     }
     return this.equals(other);

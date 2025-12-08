@@ -5,7 +5,8 @@ import { Permission } from '../../domain/Permission';
 import { PermissionId } from '../../domain/value-objects/PermissionId';
 import { Action } from '../../domain/value-objects/Action';
 import { Scope } from '../../domain/value-objects/Scope';
-import { Resource } from '../../domain/value-objects/Resource';
+import { ResourceType } from '../../domain/value-objects/ResourceType';
+import { TargetId } from '../../domain/value-objects/TargetId';
 import { PermissionRepository } from '../../domain/repositories/PermissionRepository';
 import { PermissionDocument } from '../schemas/permission.schema';
 
@@ -20,8 +21,9 @@ export class MongoPermissionRepository implements PermissionRepository {
     const doc = {
       id: permission.getId().toString(),
       action: permission.getAction().toString(),
-      scope: permission.getScope().toData(),
-      resource: permission.getResource().toString(),
+      resource_type: permission.getResourceType().toString(),
+      target_id: permission.getTargetId().toJSON(),
+      scope: permission.getScope()?.toString() ?? null,
       description: permission.getDescription(),
       createdAt: permission.getCreatedAt(),
       parentPermissions: Array.from(permission.getParentPermissions()).map(
@@ -45,15 +47,16 @@ export class MongoPermissionRepository implements PermissionRepository {
 
   async findByActionScopeResource(
     action: Action,
-    scope: Scope,
-    resource: Resource,
+    resourceType: ResourceType,
+    targetId: TargetId,
+    scope: Scope | null,
   ): Promise<Permission | null> {
     const doc = await this.permissionModel
       .findOne({
         action: action.toString(),
-        'scope.level': scope.getLevel(),
-        'scope.target': scope.getTarget() || { $exists: false },
-        resource: resource.toString(),
+        resource_type: resourceType.toString(),
+        target_id: targetId.toJSON(),
+        scope: scope?.toString() ?? null,
       })
       .exec();
     if (!doc) return null;
@@ -78,19 +81,17 @@ export class MongoPermissionRepository implements PermissionRepository {
   }
 
   private toDomain(doc: PermissionDocument): Permission {
+    const action = Action.fromString(doc.action);
+    const resourceType = ResourceType.create(doc.resource_type);
+    const targetId = TargetId.fromString(doc.target_id);
+    const scope = doc.scope ? Scope.fromString(doc.scope) : null;
+
     return Permission.reconstitute(
       PermissionId.fromString(doc.id),
-      Action.fromString(doc.action),
-      Scope.fromData({
-        level: doc.scope.level as
-          | 'own'
-          | 'team'
-          | 'org'
-          | 'global'
-          | 'specific',
-        target: doc.scope.target,
-      }),
-      Resource.create(doc.resource),
+      action,
+      resourceType,
+      targetId,
+      scope,
       doc.description,
       doc.createdAt,
       new Set(doc.parentPermissions.map((p) => PermissionId.fromString(p))),

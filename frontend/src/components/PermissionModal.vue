@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import type { TargetScopeMode, ScopeLevel } from '../types/permission'
 
 const props = defineProps<{
   isOpen: boolean
@@ -7,22 +8,57 @@ const props = defineProps<{
 
 const emit = defineEmits(['close', 'created'])
 
-const resource = ref('')
+const resourceType = ref('')
 const action = ref('')
 const description = ref('')
+const targetScopeMode = ref<TargetScopeMode>('scope')
+const targetId = ref('')
+const scope = ref<ScopeLevel>('own')
 const isSubmitting = ref(false)
 const error = ref('')
 
+const scopeLevels: { value: ScopeLevel; label: string }[] = [
+  { value: 'own', label: 'Own' },
+  { value: 'team', label: 'Team' },
+  { value: 'org', label: 'Organization' },
+  { value: 'global', label: 'Global' },
+]
+
 const resetForm = () => {
-  resource.value = ''
+  resourceType.value = ''
   action.value = ''
   description.value = ''
+  targetScopeMode.value = 'scope'
+  targetId.value = ''
+  scope.value = 'own'
   error.value = ''
 }
 
+const permissionPreview = computed(() => {
+  if (!resourceType.value || !action.value) return ''
+  
+  let preview = `${resourceType.value}:${action.value}`
+  
+  if (targetScopeMode.value === 'specific' && targetId.value) {
+    preview += `:${targetId.value}`
+  } else if (targetScopeMode.value === 'wildcard') {
+    preview += ':*'
+  } else if (targetScopeMode.value === 'scope') {
+    preview += `:${scope.value}`
+  }
+  
+  return preview
+})
+
 const createPermission = async () => {
-  if (!resource.value.trim() || !action.value.trim()) {
-    error.value = 'Resource and action are required'
+  if (!resourceType.value.trim() || !action.value.trim()) {
+    error.value = 'Resource type and action are required'
+    return
+  }
+
+  // Validate based on mode
+  if (targetScopeMode.value === 'specific' && !targetId.value.trim()) {
+    error.value = 'Target ID is required for specific targets'
     return
   }
 
@@ -30,14 +66,29 @@ const createPermission = async () => {
   error.value = ''
 
   try {
+    // Build payload based on target scope mode
+    const payload: Partial<CreatePermissionDto> = {
+      action: action.value.trim(),
+      resource_type: resourceType.value.trim(),
+      description: description.value.trim(),
+    }
+
+    if (targetScopeMode.value === 'specific') {
+      payload.target_id = targetId.value.trim()
+      payload.scope = null
+    } else if (targetScopeMode.value === 'wildcard') {
+      payload.target_id = '*'
+      payload.scope = null
+    } else {
+      // scope mode
+      payload.target_id = null
+      payload.scope = scope.value
+    }
+
     const response = await fetch('http://localhost:3000/api/permissions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        resource: resource.value.trim(),
-        action: action.value.trim(),
-        description: description.value.trim(),
-      }),
+      body: JSON.stringify(payload),
     })
 
     if (!response.ok) {
@@ -95,17 +146,8 @@ watch(
           {{ error }}
         </div>
 
-        <div class="form-group">
-          <label for="resource" class="form-label">Resource</label>
-          <input
-            id="resource"
-            v-model="resource"
-            type="text"
-            class="input"
-            placeholder="e.g., users, documents, posts"
-            :disabled="isSubmitting"
-          />
-          <p class="form-hint">The resource this permission applies to</p>
+        <div v-if="permissionPreview" class="preview-badge">
+          Preview: <span class="preview-text">{{ permissionPreview }}</span>
         </div>
 
         <div class="form-group">
@@ -115,10 +157,99 @@ watch(
             v-model="action"
             type="text"
             class="input"
-            placeholder="e.g., create, read, update, delete"
+            placeholder="e.g., read, write, delete, share"
             :disabled="isSubmitting"
           />
-          <p class="form-hint">The action that can be performed</p>
+          <p class="form-hint">Any action that can be performed</p>
+        </div>
+
+        <div class="form-group">
+          <label for="resource-type" class="form-label">Resource Type</label>
+          <input
+            id="resource-type"
+            v-model="resourceType"
+            type="text"
+            class="input"
+            placeholder="e.g., project, document, user"
+            :disabled="isSubmitting"
+          />
+          <p class="form-hint">The type of resource this permission applies to</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Target / Scope</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input
+                type="radio"
+                v-model="targetScopeMode"
+                value="specific"
+                :disabled="isSubmitting"
+              />
+              <span>Specific Target</span>
+            </label>
+            <label class="radio-option">
+              <input
+                type="radio"
+                v-model="targetScopeMode"
+                value="wildcard"
+                :disabled="isSubmitting"
+              />
+              <span>Wildcard (all resources)</span>
+            </label>
+            <label class="radio-option">
+              <input
+                type="radio"
+                v-model="targetScopeMode"
+                value="scope"
+                :disabled="isSubmitting"
+              />
+              <span>Dynamic Scope</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Specific Target Input -->
+        <div v-if="targetScopeMode === 'specific'" class="form-group">
+          <label for="target-id" class="form-label">Target ID</label>
+          <input
+            id="target-id"
+            v-model="targetId"
+            type="text"
+            class="input"
+            placeholder="e.g., project:123, doc:abc"
+            :disabled="isSubmitting"
+          />
+          <p class="form-hint">Specific resource identifier</p>
+        </div>
+
+        <!-- Scope Selector -->
+        <div v-if="targetScopeMode === 'scope'" class="form-group">
+          <label for="scope" class="form-label">Scope Level</label>
+          <select id="scope" v-model="scope" class="input" :disabled="isSubmitting">
+            <option v-for="level in scopeLevels" :key="level.value" :value="level.value">
+              {{ level.label }}
+            </option>
+          </select>
+          <p class="form-hint">Permission resolved at runtime based on user context</p>
+        </div>
+
+        <!-- Wildcard Info -->
+        <div v-if="targetScopeMode === 'wildcard'" class="info-box">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>This permission will apply to all resources of this type</span>
         </div>
 
         <div class="form-group">
@@ -182,7 +313,73 @@ watch(
   margin-bottom: var(--space-4);
 }
 
+.preview-badge {
+  padding: var(--space-3) var(--space-4);
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+.preview-text {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.radio-option:hover {
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-primary);
+}
+
+.radio-option input[type='radio'] {
+  cursor: pointer;
+}
+
+.radio-option span {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.info-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.info-box svg {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
 .modal {
-  width: 500px;
+  width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 </style>

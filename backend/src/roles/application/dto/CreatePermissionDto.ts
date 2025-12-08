@@ -2,36 +2,63 @@ import {
   IsNotEmpty,
   IsString,
   IsEnum,
-  ValidateNested,
   IsOptional,
-  ValidateIf,
+  ValidateBy,
+  ValidationOptions,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
-export class ScopeDto {
-  @IsEnum(['own', 'team', 'org', 'global', 'specific'])
-  level: 'own' | 'team' | 'org' | 'global' | 'specific';
+/**
+ * Custom validator to ensure target_id and scope are mutually exclusive
+ */
+function IsMutuallyExclusive(validationOptions?: ValidationOptions) {
+  return ValidateBy(
+    {
+      name: 'isMutuallyExclusive',
+      validator: {
+        validate(value, args) {
+          const object = args.object as CreatePermissionDto;
+          const hasTargetId =
+            object.target_id !== undefined && object.target_id !== null;
+          const hasScope = object.scope !== undefined && object.scope !== null;
 
-  @IsOptional()
-  @IsString()
-  @ValidateIf((o) => o.level === 'specific')
-  @IsNotEmpty({
-    message: 'Target is required when scope level is "specific"',
-  })
-  target?: string;
+          // Both cannot be defined
+          if (hasTargetId && hasScope) {
+            return false;
+          }
+
+          // At least one must be defined
+          if (!hasTargetId && !hasScope) {
+            return false;
+          }
+
+          return true;
+        },
+        defaultMessage() {
+          return 'target_id and scope are mutually exclusive. Provide exactly one.';
+        },
+      },
+    },
+    validationOptions,
+  );
 }
 
 export class CreatePermissionDto {
-  @IsEnum(['create', 'read', 'update', 'delete', 'execute', 'manage'])
+  @IsString()
+  @IsNotEmpty()
   action: string;
-
-  @ValidateNested()
-  @Type(() => ScopeDto)
-  scope: ScopeDto;
 
   @IsString()
   @IsNotEmpty()
-  resource: string;
+  resource_type: string;
+
+  @IsOptional()
+  @IsString()
+  @IsMutuallyExclusive()
+  target_id?: string | null; // "project:123", "*", or null
+
+  @IsOptional()
+  @IsEnum(['own', 'team', 'org', 'global'])
+  scope?: 'own' | 'team' | 'org' | 'global' | null;
 
   @IsString()
   description: string;

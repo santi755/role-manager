@@ -1,23 +1,19 @@
-export type ScopeLevel = 'own' | 'team' | 'org' | 'global' | 'specific';
+/**
+ * ScopeLevel represents dynamic scope levels that are resolved at runtime.
+ * These are used when target_id is null/none.
+ */
+export type ScopeLevel = 'own' | 'team' | 'org' | 'global';
 
-export interface ScopeData {
-  level: ScopeLevel;
-  target?: string;
-}
-
+/**
+ * Scope represents a dynamic permission scope that is resolved at runtime.
+ * This is only used when TargetId is none (null).
+ * Scope hierarchy: global > org > team > own
+ */
 export class Scope {
   private readonly level: ScopeLevel;
-  private readonly target?: string;
 
-  private constructor(level: ScopeLevel, target?: string) {
-    if (level === 'specific' && !target) {
-      throw new Error('Target is required when scope level is "specific"');
-    }
-    if (level !== 'specific' && target) {
-      throw new Error('Target should only be provided when scope level is "specific"');
-    }
+  private constructor(level: ScopeLevel) {
     this.level = level;
-    this.target = target;
   }
 
   static own(): Scope {
@@ -36,30 +32,14 @@ export class Scope {
     return new Scope('global');
   }
 
-  static specific(target: string): Scope {
-    if (!target || target.trim().length === 0) {
-      throw new Error('Target cannot be empty for specific scope');
-    }
-    return new Scope('specific', target);
-  }
-
-  static fromData(data: ScopeData): Scope {
-    return new Scope(data.level, data.target);
-  }
-
   static fromString(value: string): Scope {
-    // Parse "specific:project:123" format
-    if (value.startsWith('specific:')) {
-      const target = value.substring(9); // Remove "specific:"
-      return Scope.specific(target);
-    }
-
-    // Parse simple level
-    const validLevels: ScopeLevel[] = ['own', 'team', 'org', 'global', 'specific'];
+    const validLevels: ScopeLevel[] = ['own', 'team', 'org', 'global'];
     const level = value.toLowerCase() as ScopeLevel;
-    
+
     if (!validLevels.includes(level)) {
-      throw new Error(`Invalid scope level: ${value}. Must be one of: ${validLevels.join(', ')}`);
+      throw new Error(
+        `Invalid scope level: ${value}. Must be one of: ${validLevels.join(', ')}`,
+      );
     }
 
     return new Scope(level);
@@ -69,33 +49,22 @@ export class Scope {
     return this.level;
   }
 
-  getTarget(): string | undefined {
-    return this.target;
-  }
-
-  toData(): ScopeData {
-    const data: ScopeData = { level: this.level };
-    if (this.target) {
-      data.target = this.target;
-    }
-    return data;
-  }
-
   toString(): string {
-    if (this.level === 'specific' && this.target) {
-      return `specific:${this.target}`;
-    }
+    return this.level;
+  }
+
+  toJSON(): string {
     return this.level;
   }
 
   equals(other: Scope): boolean {
-    return this.level === other.level && this.target === other.target;
+    return this.level === other.level;
   }
 
   /**
    * Check if this scope implies another scope.
    * Scope hierarchy: global > org > team > own
-   * Specific scopes only match exactly.
+   * Higher scopes imply lower scopes.
    */
   implies(other: Scope): boolean {
     const hierarchy: ScopeLevel[] = ['global', 'org', 'team', 'own'];
@@ -104,15 +73,6 @@ export class Scope {
     const otherIndex = hierarchy.indexOf(other.level);
 
     // Higher scope implies lower scope
-    if (thisIndex !== -1 && otherIndex !== -1) {
-      return thisIndex <= otherIndex;
-    }
-
-    // Specific scopes only match exactly
-    if (this.level === 'specific' || other.level === 'specific') {
-      return this.equals(other);
-    }
-
-    return false;
+    return thisIndex <= otherIndex;
   }
 }

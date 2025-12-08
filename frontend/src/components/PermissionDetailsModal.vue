@@ -1,21 +1,30 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import type { Permission } from '../types/permission'
 
 const props = defineProps<{
-  permission: {
-    id: string
-    resource: string
-    action: string
-    description: string
-    parentPermissions: string[]
-  } | null
+  permission: Permission | null
   isOpen: boolean
 }>()
 
 const emit = defineEmits(['close', 'refresh'])
 
-const parentPermissions = ref<{ id: string; resource: string; action: string }[]>([])
-const availablePermissions = ref<{ id: string; resource: string; action: string }[]>([])
+const parentPermissions = ref<Permission[]>([])
+const availablePermissions = ref<Permission[]>([])
+
+const permissionIdentifier = computed(() => {
+  if (!props.permission) return ''
+  
+  let identifier = `${props.permission.resource_type}:${props.permission.action}`
+  
+  if (props.permission.target_id) {
+    identifier += `:${props.permission.target_id}`
+  } else if (props.permission.scope) {
+    identifier += `:${props.permission.scope}`
+  }
+  
+  return identifier
+})
 const selectedParentPermission = ref('')
 
 const fetchParentPermissions = async () => {
@@ -33,7 +42,7 @@ const fetchParentPermissions = async () => {
       // The hierarchy endpoint returns ancestors. Direct parents are those in parentPermissions list.
       // But to get their names (resource:action), we need to look them up.
       // Let's use the ancestors list from hierarchy which contains full objects
-      parentPermissions.value = hierarchy.ancestors.filter((p: any) =>
+      parentPermissions.value = (hierarchy.ancestors as Permission[]).filter((p) =>
         props.permission?.parentPermissions.includes(p.id),
       )
     }
@@ -50,11 +59,11 @@ const fetchAvailablePermissions = async () => {
   try {
     const response = await fetch('http://localhost:3000/api/permissions')
     if (response.ok) {
-      const allPermissions = await response.json()
+      const allPermissions = (await response.json()) as Permission[]
       // Filter out self and already assigned parents to prevent cycles (simple check)
       // The backend has robust cycle detection, but we can filter obvious ones here
       availablePermissions.value = allPermissions.filter(
-        (p: any) =>
+        (p) =>
           p.id !== props.permission?.id && !parentPermissions.value.some((pp) => pp.id === p.id),
       )
     }
@@ -138,8 +147,7 @@ watch(
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title">
-          <span class="text-primary">{{ permission?.resource }}</span
-          >:{{ permission?.action }}
+          <span class="text-primary">{{ permissionIdentifier }}</span>
         </h2>
         <button @click="$emit('close')" class="btn btn-ghost btn-icon">
           <svg
@@ -160,15 +168,36 @@ watch(
       </div>
 
       <div class="modal-body">
-        <p class="text-secondary mb-6">{{ permission?.description }}</p>
+        <div class="permission-details">
+          <div class="detail-row">
+            <span class="detail-label">Action:</span>
+            <span class="detail-value">{{ permission?.action }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Resource Type:</span>
+            <span class="detail-value">{{ permission?.resource_type }}</span>
+          </div>
+          <div v-if="permission?.target_id" class="detail-row">
+            <span class="detail-label">Target:</span>
+            <span class="detail-value target-badge">{{ permission.target_id }}</span>
+          </div>
+          <div v-if="permission?.scope" class="detail-row">
+            <span class="detail-label">Scope:</span>
+            <span class="detail-value scope-badge">{{ permission.scope }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Description:</span>
+            <span class="detail-value">{{ permission?.description }}</span>
+          </div>
+        </div>
 
         <h3 class="section-title">Parent Permissions (Inherits from)</h3>
         <ul class="permission-list">
           <li v-for="parent in parentPermissions" :key="parent.id" class="permission-item">
             <span class="permission-text">
-              <span class="text-primary">{{ parent.resource }}</span
-              >:
-              <span class="text-secondary">{{ parent.action }}</span>
+              <span class="text-primary">{{ parent.resource_type }}:{{ parent.action }}</span>
+              <span v-if="parent.target_id" class="text-tertiary">:{{ parent.target_id }}</span>
+              <span v-if="parent.scope" class="text-tertiary">:{{ parent.scope }}</span>
             </span>
             <div class="flex items-center gap-2">
               <button
@@ -189,7 +218,9 @@ watch(
           <select v-model="selectedParentPermission" class="input flex-1">
             <option disabled value="">Select parent permission to add</option>
             <option v-for="perm in availablePermissions" :key="perm.id" :value="perm.id">
-              {{ perm.resource }}: {{ perm.action }}
+              {{ perm.resource_type }}: {{ perm.action }}
+              <template v-if="perm.target_id">: {{ perm.target_id }}</template>
+              <template v-if="perm.scope">: {{ perm.scope }}</template>
             </option>
           </select>
           <button
@@ -333,5 +364,58 @@ watch(
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.permission-details {
+  background-color: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.detail-row {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  min-width: 120px;
+}
+
+.detail-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.target-badge,
+.scope-badge {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+}
+
+.target-badge {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--color-primary);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.scope-badge {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: rgb(16, 185, 129);
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 </style>

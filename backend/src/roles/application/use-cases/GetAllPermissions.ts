@@ -3,7 +3,7 @@ import type { PermissionRepository } from '../../domain/repositories/PermissionR
 import { PermissionDto } from '../dto/PermissionDto';
 
 export interface GetAllPermissionsQuery {
-  resource?: string;
+  resource_type?: string;
 }
 
 @Injectable()
@@ -21,26 +21,29 @@ export class GetAllPermissions {
       const permissions = await this.permissionRepository.findAll();
       this.logger.log(`Found ${permissions.length} permissions`);
 
-      const filteredPermissions = query?.resource
+      const filteredPermissions = query?.resource_type
         ? permissions.filter(
-            (p) => p.getResource().toString() === query.resource,
+            (p) => p.getResourceType().toString() === query.resource_type,
           )
         : permissions;
 
-      this.logger.log(`Mapping ${filteredPermissions.length} permissions to DTOs`);
-      
+      this.logger.log(
+        `Mapping ${filteredPermissions.length} permissions to DTOs`,
+      );
+
       return filteredPermissions.map((permission, index) => {
         try {
           return {
             id: permission.getId().toString(),
             action: permission.getAction().toString(),
-            scope: permission.getScope().toData(),
-            resource: permission.getResource().toString(),
+            resource_type: permission.getResourceType().toString(),
+            target_id: permission.getTargetId().toJSON(),
+            scope: permission.getScope()?.toString() ?? null,
             description: permission.getDescription(),
             createdAt: permission.getCreatedAt(),
-            parentPermissions: Array.from(permission.getParentPermissions()).map(
-              (id) => id.toString(),
-            ),
+            parentPermissions: Array.from(
+              permission.getParentPermissions(),
+            ).map((id) => id.toString()),
           };
         } catch (mappingError) {
           this.logger.error(

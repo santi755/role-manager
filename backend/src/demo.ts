@@ -28,40 +28,40 @@ async function bootstrap() {
     console.log('\n📝 Creating Permissions...');
     const viewUsersPermission = await createPermission.execute({
       action: 'read',
-      scope: { level: 'global' },
-      resource: 'users',
+      resource_type: 'users',
+      scope: 'global',
       description: 'View users',
     });
     console.log(`  ✓ Created: users:read:global`);
 
     const editUsersPermission = await createPermission.execute({
       action: 'update',
-      scope: { level: 'global' },
-      resource: 'users',
+      resource_type: 'users',
+      scope: 'global',
       description: 'Edit users',
     });
     console.log(`  ✓ Created: users:update:global`);
 
     const deleteUsersPermission = await createPermission.execute({
       action: 'delete',
-      scope: { level: 'global' },
-      resource: 'users',
+      resource_type: 'users',
+      scope: 'global',
       description: 'Delete users',
     });
     console.log(`  ✓ Created: users:delete:global`);
 
     const viewPostsPermission = await createPermission.execute({
       action: 'read',
-      scope: { level: 'global' },
-      resource: 'posts',
+      resource_type: 'posts',
+      scope: 'global',
       description: 'View posts',
     });
     console.log(`  ✓ Created: posts:read:global`);
 
     const editPostsPermission = await createPermission.execute({
       action: 'update',
-      scope: { level: 'global' },
-      resource: 'posts',
+      resource_type: 'posts',
+      scope: 'global',
       description: 'Edit posts',
     });
     console.log(`  ✓ Created: posts:update:global`);

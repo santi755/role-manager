@@ -1,13 +1,22 @@
 import { PermissionId } from './value-objects/PermissionId';
 import { Action } from './value-objects/Action';
 import { Scope } from './value-objects/Scope';
-import { Resource } from './value-objects/Resource';
+import { ResourceType } from './value-objects/ResourceType';
+import { TargetId } from './value-objects/TargetId';
 
+/**
+ * Permission represents an authorization rule with:
+ * - action: what can be done (create, read, update, delete, etc.)
+ * - resourceType: type of resource (project, document, user, etc.)
+ * - targetId: specific target, wildcard, or none (mutually exclusive with scope)
+ * - scope: dynamic scope level (own, team, org, global) - only if targetId is none
+ */
 export class Permission {
   private readonly id: PermissionId;
   private readonly action: Action;
-  private readonly scope: Scope;
-  private readonly resource: Resource;
+  private readonly resourceType: ResourceType;
+  private readonly targetId: TargetId;
+  private readonly scope: Scope | null;
   private readonly description: string;
   private readonly createdAt: Date;
   private readonly parentPermissions: Set<PermissionId>;
@@ -15,16 +24,32 @@ export class Permission {
   private constructor(
     id: PermissionId,
     action: Action,
-    scope: Scope,
-    resource: Resource,
+    resourceType: ResourceType,
+    targetId: TargetId,
+    scope: Scope | null,
     description: string,
     createdAt: Date,
     parentPermissions: Set<PermissionId> = new Set(),
   ) {
+    // Validate mutual exclusivity: targetId and scope cannot coexist
+    if (!targetId.isNone() && scope !== null) {
+      throw new Error(
+        'targetId and scope are mutually exclusive. Use targetId for specific/wildcard or scope for dynamic levels.',
+      );
+    }
+
+    // If targetId is none, scope must be defined
+    if (targetId.isNone() && scope === null) {
+      throw new Error(
+        'scope is required when targetId is none. Specify a dynamic scope level.',
+      );
+    }
+
     this.id = id;
     this.action = action;
+    this.resourceType = resourceType;
+    this.targetId = targetId;
     this.scope = scope;
-    this.resource = resource;
     this.description = description;
     this.createdAt = createdAt;
     this.parentPermissions = parentPermissions;
@@ -32,15 +57,17 @@ export class Permission {
 
   static create(
     action: Action,
-    scope: Scope,
-    resource: Resource,
+    resourceType: ResourceType,
+    targetId: TargetId,
+    scope: Scope | null,
     description: string,
   ): Permission {
     return new Permission(
       PermissionId.create(),
       action,
+      resourceType,
+      targetId,
       scope,
-      resource,
       description,
       new Date(),
     );
@@ -49,8 +76,9 @@ export class Permission {
   static reconstitute(
     id: PermissionId,
     action: Action,
-    scope: Scope,
-    resource: Resource,
+    resourceType: ResourceType,
+    targetId: TargetId,
+    scope: Scope | null,
     description: string,
     createdAt: Date,
     parentPermissions: Set<PermissionId>,
@@ -58,8 +86,9 @@ export class Permission {
     return new Permission(
       id,
       action,
+      resourceType,
+      targetId,
       scope,
-      resource,
       description,
       createdAt,
       parentPermissions,
@@ -74,12 +103,16 @@ export class Permission {
     return this.action;
   }
 
-  getScope(): Scope {
-    return this.scope;
+  getResourceType(): ResourceType {
+    return this.resourceType;
   }
 
-  getResource(): Resource {
-    return this.resource;
+  getTargetId(): TargetId {
+    return this.targetId;
+  }
+
+  getScope(): Scope | null {
+    return this.scope;
   }
 
   getDescription(): string {
@@ -120,14 +153,37 @@ export class Permission {
    * Check if this permission implies another permission.
    * A permission implies another if:
    * - The action implies the other action (e.g., 'manage' implies all)
-   * - The scope implies the other scope (e.g., 'global' implies 'org')
-   * - The resource is the same
+   * - The resource type is the same
+   * - The target/scope coverage includes the other permission
    */
   implies(other: Permission): boolean {
-    return (
-      this.action.implies(other.action) &&
-      this.scope.implies(other.scope) &&
-      this.resource.equals(other.resource)
-    );
+    // Must be same resource type
+    if (!this.resourceType.equals(other.resourceType)) {
+      return false;
+    }
+
+    // Action must imply
+    if (!this.action.implies(other.action)) {
+      return false;
+    }
+
+    // Target/Scope logic:
+    // 1. Wildcard targetId implies everything
+    if (this.targetId.isWildcard()) {
+      return true;
+    }
+
+    // 2. If both have scopes (dynamic), use scope hierarchy
+    if (this.scope && other.scope) {
+      return this.scope.implies(other.scope);
+    }
+
+    // 3. If both have specific targetIds, they must match
+    if (this.targetId.isSpecific() && other.targetId.isSpecific()) {
+      return this.targetId.equals(other.targetId);
+    }
+
+    // 4. Otherwise, no implication
+    return false;
   }
 }
