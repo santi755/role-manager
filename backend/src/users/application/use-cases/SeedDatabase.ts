@@ -18,6 +18,56 @@ export interface SeedDataResult {
   message: string;
 }
 
+/**
+ * SeedDatabase Use Case
+ *
+ * Initializes the database with a comprehensive RBAC system featuring:
+ *
+ * PERMISSIONS (65+):
+ * - Scope-based: own, team, org, global (dynamic hierarchy)
+ * - Target-specific: project:backend, repo:main, db:production, * (wildcard)
+ * - Actions: create, read, update, delete, execute, manage
+ * - Resources: user, project, repository, deployment, infrastructure, document,
+ *              design, analytics, report, billing, settings, role, permission
+ *
+ * ROLE HIERARCHY (12 roles):
+ *              CTO
+ *              ├── Engineering Manager
+ *              │   ├── Tech Lead
+ *              │   │   └── Senior Developer
+ *              │   │       └── Developer
+ *              │   │           └── Junior Developer
+ *              │   │               └── Viewer
+ *              │   └── Project Manager
+ *              │       └── Viewer
+ *              ├── DevOps Engineer
+ *              │   └── Senior Developer
+ *              ├── Design Lead
+ *              │   └── Designer
+ *              │       └── Viewer
+ *              ├── HR Manager
+ *              │   └── Viewer
+ *              └── QA Engineer
+ *                  └── Viewer
+ *
+ * USERS (12 realistic personas):
+ * - Each role has a dedicated test user with meaningful name and email
+ * - Enables comprehensive testing of permission hierarchies
+ * - Supports role inheritance validation
+ *
+ * KEY FEATURES:
+ * ✓ Mutual exclusivity: targetId and scope cannot coexist
+ * ✓ Action hierarchy: 'manage' implies all other actions
+ * ✓ Scope hierarchy: global > org > team > own
+ * ✓ Wildcard support: targetId: '*' implies all specific targets
+ * ✓ Semantic permission keys: resource:action:target|scope
+ *
+ * USAGE:
+ * POST /api/seed → Clears all data and reinitializes the database
+ * Useful for testing and development environments
+ *
+ * CAUTION: This operation is destructive and clears all existing data
+ */
 @Injectable()
 export class SeedDatabase {
   constructor(
@@ -84,222 +134,558 @@ export class SeedDatabase {
 
   private async createPermissions(): Promise<Record<string, Permission>> {
     const permissionDefinitions = [
-      // User Management - Global scope
+      // ========== USER MANAGEMENT ==========
       {
         action: 'create',
         scope: 'global',
         resource_type: 'user',
-        description: 'Create new users',
+        target_id: null,
+        description: 'Create new users (global admin)',
       },
       {
         action: 'read',
         scope: 'global',
         resource_type: 'user',
-        description: 'View user details',
+        target_id: null,
+        description: 'View any user details',
+      },
+      {
+        action: 'read',
+        scope: 'org',
+        resource_type: 'user',
+        target_id: null,
+        description: 'View all users in organization',
+      },
+      {
+        action: 'read',
+        scope: 'team',
+        resource_type: 'user',
+        target_id: null,
+        description: 'View team members',
+      },
+      {
+        action: 'read',
+        scope: 'own',
+        resource_type: 'user',
+        target_id: null,
+        description: 'View own user profile',
       },
       {
         action: 'update',
         scope: 'global',
         resource_type: 'user',
-        description: 'Update user information',
+        target_id: null,
+        description: 'Update any user information',
+      },
+      {
+        action: 'update',
+        scope: 'team',
+        resource_type: 'user',
+        target_id: null,
+        description: 'Update team member information',
+      },
+      {
+        action: 'update',
+        scope: 'own',
+        resource_type: 'user',
+        target_id: null,
+        description: 'Update own profile',
       },
       {
         action: 'delete',
         scope: 'global',
         resource_type: 'user',
+        target_id: null,
         description: 'Delete users',
       },
 
-      // Project Management - Global scope
+      // ========== PROJECT MANAGEMENT ==========
+      {
+        action: 'create',
+        scope: 'own',
+        resource_type: 'project',
+        target_id: null,
+        description: 'Create personal projects',
+      },
+      {
+        action: 'create',
+        scope: 'team',
+        resource_type: 'project',
+        target_id: null,
+        description: 'Create team projects',
+      },
       {
         action: 'create',
         scope: 'global',
         resource_type: 'project',
-        description: 'Create new projects',
+        target_id: null,
+        description: 'Create projects globally',
       },
       {
         action: 'read',
-        scope: 'global',
+        scope: 'own',
         resource_type: 'project',
-        description: 'View project details',
+        target_id: null,
+        description: 'View own projects',
+      },
+      {
+        action: 'read',
+        scope: 'team',
+        resource_type: 'project',
+        target_id: null,
+        description: 'View team projects',
+      },
+      {
+        action: 'read',
+        scope: 'org',
+        resource_type: 'project',
+        target_id: null,
+        description: 'View all organization projects',
       },
       {
         action: 'update',
-        scope: 'global',
+        scope: 'own',
         resource_type: 'project',
-        description: 'Update project information',
+        target_id: null,
+        description: 'Update own projects',
+      },
+      {
+        action: 'update',
+        scope: 'team',
+        resource_type: 'project',
+        target_id: null,
+        description: 'Update team projects',
+      },
+      {
+        action: 'update',
+        scope: null,
+        resource_type: 'project',
+        target_id: 'project:backend',
+        description: 'Update Backend project',
+      },
+      {
+        action: 'update',
+        scope: null,
+        resource_type: 'project',
+        target_id: 'project:frontend',
+        description: 'Update Frontend project',
+      },
+      {
+        action: 'update',
+        scope: null,
+        resource_type: 'project',
+        target_id: 'project:devops',
+        description: 'Update DevOps project',
+      },
+      {
+        action: 'update',
+        scope: null,
+        resource_type: 'project',
+        target_id: '*',
+        description: 'Update any project',
       },
       {
         action: 'delete',
         scope: 'global',
         resource_type: 'project',
+        target_id: null,
         description: 'Delete projects',
       },
-
-      // Code Repository - Global scope
       {
-        action: 'create',
-        scope: 'global',
+        action: 'manage',
+        scope: null,
+        resource_type: 'project',
+        target_id: '*',
+        description: 'Manage all projects',
+      },
+
+      // ========== CODE REPOSITORY ==========
+      {
+        action: 'read',
+        scope: 'org',
         resource_type: 'repository',
-        description: 'Create new repositories',
+        target_id: null,
+        description: 'Read all organization repositories',
       },
       {
         action: 'read',
-        scope: 'global',
+        scope: 'team',
         resource_type: 'repository',
-        description: 'View repository code',
+        target_id: null,
+        description: 'Read team repositories',
+      },
+      {
+        action: 'create',
+        scope: 'team',
+        resource_type: 'repository',
+        target_id: null,
+        description: 'Create team repositories',
       },
       {
         action: 'update',
-        scope: 'global',
+        scope: null,
         resource_type: 'repository',
-        description: 'Push code to repositories',
+        target_id: '*',
+        description: 'Push code to any repository',
+      },
+      {
+        action: 'update',
+        scope: null,
+        resource_type: 'repository',
+        target_id: 'repo:main',
+        description: 'Push to main branch',
+      },
+      {
+        action: 'update',
+        scope: null,
+        resource_type: 'repository',
+        target_id: 'repo:staging',
+        description: 'Push to staging branch',
       },
       {
         action: 'delete',
-        scope: 'global',
+        scope: null,
         resource_type: 'repository',
-        description: 'Delete repositories',
+        target_id: 'repo:staging',
+        description: 'Delete staging branch',
+      },
+      {
+        action: 'delete',
+        scope: null,
+        resource_type: 'repository',
+        target_id: '*',
+        description: 'Delete any repository',
+      },
+      {
+        action: 'manage',
+        scope: null,
+        resource_type: 'repository',
+        target_id: '*',
+        description: 'Manage all repositories',
       },
 
-      // Deployment - Global scope
+      // ========== DEPLOYMENT & CI/CD ==========
       {
-        action: 'create',
-        scope: 'global',
+        action: 'execute',
+        scope: 'own',
         resource_type: 'deployment',
-        description: 'Create deployments',
+        target_id: null,
+        description: 'Deploy personal dev environment',
       },
       {
-        action: 'read',
-        scope: 'global',
+        action: 'execute',
+        scope: 'team',
         resource_type: 'deployment',
-        description: 'View deployment status',
+        target_id: null,
+        description: 'Deploy to staging environment',
       },
       {
         action: 'execute',
         scope: 'global',
         resource_type: 'deployment',
-        description: 'Execute deployments',
+        target_id: null,
+        description: 'Deploy to production',
       },
-
-      // Infrastructure - Global scope
       {
         action: 'read',
-        scope: 'global',
+        scope: 'team',
+        resource_type: 'deployment',
+        target_id: null,
+        description: 'View team deployment status',
+      },
+      {
+        action: 'read',
+        scope: 'org',
+        resource_type: 'deployment',
+        target_id: null,
+        description: 'View organization deployment status',
+      },
+
+      // ========== INFRASTRUCTURE ==========
+      {
+        action: 'read',
+        scope: 'org',
         resource_type: 'infrastructure',
-        description: 'View infrastructure',
+        target_id: null,
+        description: 'View organization infrastructure',
       },
       {
         action: 'manage',
-        scope: 'global',
+        scope: null,
         resource_type: 'infrastructure',
-        description: 'Manage infrastructure',
+        target_id: 'db:production',
+        description: 'Manage production database',
+      },
+      {
+        action: 'manage',
+        scope: null,
+        resource_type: 'infrastructure',
+        target_id: 'db:staging',
+        description: 'Manage staging database',
+      },
+      {
+        action: 'manage',
+        scope: null,
+        resource_type: 'infrastructure',
+        target_id: '*',
+        description: 'Manage all infrastructure',
       },
 
-      // Design Assets - Global scope
+      // ========== DOCUMENTS & KNOWLEDGE BASE ==========
       {
         action: 'create',
-        scope: 'global',
-        resource_type: 'design',
-        description: 'Create design assets',
+        scope: 'own',
+        resource_type: 'document',
+        target_id: null,
+        description: 'Create personal documents',
+      },
+      {
+        action: 'create',
+        scope: 'team',
+        resource_type: 'document',
+        target_id: null,
+        description: 'Create team documents',
       },
       {
         action: 'read',
-        scope: 'global',
-        resource_type: 'design',
-        description: 'View design assets',
+        scope: 'own',
+        resource_type: 'document',
+        target_id: null,
+        description: 'Read own documents',
+      },
+      {
+        action: 'read',
+        scope: 'team',
+        resource_type: 'document',
+        target_id: null,
+        description: 'Read team documents',
+      },
+      {
+        action: 'read',
+        scope: 'org',
+        resource_type: 'document',
+        target_id: null,
+        description: 'Read organization documents',
       },
       {
         action: 'update',
-        scope: 'global',
-        resource_type: 'design',
-        description: 'Update design assets',
+        scope: 'own',
+        resource_type: 'document',
+        target_id: null,
+        description: 'Edit personal documents',
+      },
+      {
+        action: 'update',
+        scope: 'team',
+        resource_type: 'document',
+        target_id: null,
+        description: 'Edit team documents',
       },
       {
         action: 'delete',
-        scope: 'global',
-        resource_type: 'design',
-        description: 'Delete design assets',
+        scope: null,
+        resource_type: 'document',
+        target_id: '*',
+        description: 'Delete documents',
       },
 
-      // Analytics & Reports - Global scope
+      // ========== DESIGN ASSETS ==========
       {
-        action: 'read',
-        scope: 'global',
-        resource_type: 'analytics',
-        description: 'View analytics',
+        action: 'create',
+        scope: 'own',
+        resource_type: 'design',
+        target_id: null,
+        description: 'Create personal design assets',
       },
       {
         action: 'create',
-        scope: 'global',
-        resource_type: 'report',
-        description: 'Create reports',
+        scope: 'team',
+        resource_type: 'design',
+        target_id: null,
+        description: 'Create team design assets',
       },
       {
         action: 'read',
-        scope: 'global',
-        resource_type: 'report',
-        description: 'View reports',
+        scope: 'team',
+        resource_type: 'design',
+        target_id: null,
+        description: 'View team design assets',
+      },
+      {
+        action: 'read',
+        scope: 'org',
+        resource_type: 'design',
+        target_id: null,
+        description: 'View organization design assets',
+      },
+      {
+        action: 'update',
+        scope: 'own',
+        resource_type: 'design',
+        target_id: null,
+        description: 'Edit personal design assets',
+      },
+      {
+        action: 'update',
+        scope: 'team',
+        resource_type: 'design',
+        target_id: null,
+        description: 'Edit team design assets',
+      },
+      {
+        action: 'delete',
+        scope: null,
+        resource_type: 'design',
+        target_id: '*',
+        description: 'Delete design assets',
       },
 
-      // Billing & Finance - Global scope
+      // ========== ANALYTICS & REPORTS ==========
       {
         action: 'read',
-        scope: 'global',
+        scope: 'team',
+        resource_type: 'analytics',
+        target_id: null,
+        description: 'View team analytics',
+      },
+      {
+        action: 'read',
+        scope: 'org',
+        resource_type: 'analytics',
+        target_id: null,
+        description: 'View organization analytics',
+      },
+      {
+        action: 'create',
+        scope: 'team',
+        resource_type: 'report',
+        target_id: null,
+        description: 'Create team reports',
+      },
+      {
+        action: 'create',
+        scope: 'org',
+        resource_type: 'report',
+        target_id: null,
+        description: 'Create organization reports',
+      },
+      {
+        action: 'read',
+        scope: 'team',
+        resource_type: 'report',
+        target_id: null,
+        description: 'View team reports',
+      },
+      {
+        action: 'read',
+        scope: 'org',
+        resource_type: 'report',
+        target_id: null,
+        description: 'View organization reports',
+      },
+
+      // ========== BILLING & FINANCE ==========
+      {
+        action: 'read',
+        scope: 'team',
         resource_type: 'billing',
-        description: 'View billing information',
+        target_id: null,
+        description: 'View team billing',
+      },
+      {
+        action: 'read',
+        scope: 'org',
+        resource_type: 'billing',
+        target_id: null,
+        description: 'View organization billing',
       },
       {
         action: 'manage',
         scope: 'global',
         resource_type: 'billing',
-        description: 'Manage billing and payments',
+        target_id: null,
+        description: 'Manage all billing and payments',
       },
 
-      // Settings & Configuration - Global scope
+      // ========== SETTINGS & CONFIGURATION ==========
       {
         action: 'read',
-        scope: 'global',
+        scope: 'team',
         resource_type: 'settings',
-        description: 'View system settings',
+        target_id: null,
+        description: 'View team settings',
+      },
+      {
+        action: 'read',
+        scope: 'org',
+        resource_type: 'settings',
+        target_id: null,
+        description: 'View organization settings',
       },
       {
         action: 'update',
+        scope: 'team',
+        resource_type: 'settings',
+        target_id: null,
+        description: 'Update team settings',
+      },
+      {
+        action: 'manage',
         scope: 'global',
         resource_type: 'settings',
-        description: 'Update system settings',
+        target_id: null,
+        description: 'Manage all system settings',
       },
 
-      // Roles & Permissions - Global scope
+      // ========== ROLES & PERMISSIONS MANAGEMENT ==========
+      {
+        action: 'read',
+        scope: 'org',
+        resource_type: 'role',
+        target_id: null,
+        description: 'View all roles',
+      },
       {
         action: 'create',
         scope: 'global',
         resource_type: 'role',
+        target_id: null,
         description: 'Create new roles',
-      },
-      {
-        action: 'read',
-        scope: 'global',
-        resource_type: 'role',
-        description: 'View roles',
       },
       {
         action: 'update',
         scope: 'global',
         resource_type: 'role',
+        target_id: null,
         description: 'Update roles',
       },
       {
         action: 'delete',
         scope: 'global',
         resource_type: 'role',
+        target_id: null,
         description: 'Delete roles',
       },
       {
         action: 'manage',
         scope: 'global',
+        resource_type: 'role',
+        target_id: null,
+        description: 'Manage all roles',
+      },
+      {
+        action: 'read',
+        scope: 'org',
         resource_type: 'permission',
-        description: 'Manage permissions',
+        target_id: null,
+        description: 'View all permissions',
+      },
+      {
+        action: 'manage',
+        scope: 'global',
+        resource_type: 'permission',
+        target_id: null,
+        description: 'Manage all permissions',
       },
     ];
 
@@ -308,11 +694,17 @@ export class SeedDatabase {
     for (const def of permissionDefinitions) {
       const permission = await this.createPermission.execute({
         action: def.action,
-        scope: def.scope,
+        scope: def.scope || null,
+        target_id: def.target_id || null,
         resource_type: def.resource_type,
         description: def.description,
       });
-      const key = `${def.resource_type}:${def.action}:${def.scope}`;
+
+      // Create consistent semantic key
+      const key = def.target_id
+        ? `${def.resource_type}:${def.action}:${def.target_id}`
+        : `${def.resource_type}:${def.action}:${def.scope}`;
+
       permissions[key] = permission;
     }
 
@@ -441,103 +833,243 @@ export class SeedDatabase {
     roles: Record<string, Role>,
     permissions: Record<string, Permission>,
   ): Promise<void> {
-    // Helper function to grant permission
+    // Helper function to grant permission by semantic key
     const grant = async (roleName: string, permissionKey: string) => {
-      if (permissions[permissionKey]) {
+      const permission = permissions[permissionKey];
+      
+      if (!permission) {
+        console.warn(
+          `⚠️  Permission not found: "${permissionKey}" for role "${roleName}". Available keys:`,
+          Object.keys(permissions).filter(k => k.includes(permissionKey.split(':')[0])).slice(0, 5),
+        );
+        return;
+      }
+
+      try {
         await this.grantPermissionToRole.execute({
           roleId: roles[roleName].getId().toString(),
-          permissionId: permissions[permissionKey].getId().toString(),
+          permissionId: permission.getId().toString(),
         });
+      } catch (error) {
+        console.error(
+          `❌ Failed to grant "${permissionKey}" to role "${roleName}":`,
+          error instanceof Error ? error.message : error,
+        );
       }
     };
 
-    // Viewer - Read-only access
-    await grant('Viewer', 'project:read:global');
-    await grant('Viewer', 'repository:read:global');
-    await grant('Viewer', 'deployment:read:global');
-    await grant('Viewer', 'design:read:global');
-    await grant('Viewer', 'analytics:read:global');
-    await grant('Viewer', 'report:read:global');
-    await grant('Viewer', 'user:read:global');
+    // ========== VIEWER: Base read-only role ==========
+    await grant('Viewer', 'user:read:org');
+    await grant('Viewer', 'user:read:team');
+    await grant('Viewer', 'project:read:team');
+    await grant('Viewer', 'project:read:org');
+    await grant('Viewer', 'repository:read:org');
+    await grant('Viewer', 'deployment:read:team');
+    await grant('Viewer', 'deployment:read:org');
+    await grant('Viewer', 'document:read:team');
+    await grant('Viewer', 'document:read:org');
+    await grant('Viewer', 'design:read:team');
+    await grant('Viewer', 'design:read:org');
+    await grant('Viewer', 'analytics:read:team');
+    await grant('Viewer', 'analytics:read:org');
+    await grant('Viewer', 'report:read:team');
+    await grant('Viewer', 'report:read:org');
+    await grant('Viewer', 'role:read:org');
+    await grant('Viewer', 'permission:read:org');
 
-    // Junior Developer - Basic development permissions
-    await grant('Junior Developer', 'repository:update:global');
-    await grant('Junior Developer', 'deployment:execute:global');
+    // ========== JUNIOR DEVELOPER ==========
+    await grant('Junior Developer', 'user:update:own');
+    await grant('Junior Developer', 'project:create:own');
+    await grant('Junior Developer', 'project:update:own');
+    await grant('Junior Developer', 'document:create:own');
+    await grant('Junior Developer', 'document:update:own');
 
-    // Developer - Full development permissions
-    await grant('Developer', 'project:update:global');
+    // ========== DEVELOPER ==========
+    await grant('Developer', 'user:read:team');
+    await grant('Developer', 'user:update:team');
+    await grant('Developer', 'repository:update:*');
+    await grant('Developer', 'deployment:execute:own');
+    await grant('Developer', 'document:create:team');
+    await grant('Developer', 'document:update:team');
 
-    // Senior Developer - Advanced development + deployment
-    await grant('Senior Developer', 'repository:create:global');
-    await grant('Senior Developer', 'deployment:create:global');
+    // ========== SENIOR DEVELOPER ==========
+    await grant('Senior Developer', 'repository:create:team');
+    await grant('Senior Developer', 'deployment:execute:team');
+    await grant('Senior Developer', 'infrastructure:read:org');
+    await grant('Senior Developer', 'infrastructure:manage:db:staging');
 
-    // Tech Lead - Code review + project management
-    await grant('Tech Lead', 'project:create:global');
-    await grant('Tech Lead', 'repository:delete:global');
-    await grant('Tech Lead', 'user:update:global');
+    // ========== TECH LEAD ==========
+    await grant('Tech Lead', 'user:update:team');
+    await grant('Tech Lead', 'project:update:project:backend');
+    await grant('Tech Lead', 'repository:update:repo:main');
+    await grant('Tech Lead', 'repository:delete:repo:staging');
+    await grant('Tech Lead', 'settings:read:org');
 
-    // Engineering Manager - Team and resource management
+    // ========== ENGINEERING MANAGER ==========
     await grant('Engineering Manager', 'user:create:global');
-    await grant('Engineering Manager', 'project:delete:global');
-    await grant('Engineering Manager', 'report:create:global');
+    await grant('Engineering Manager', 'user:update:team');
+    await grant('Engineering Manager', 'project:update:*');
+    await grant('Engineering Manager', 'deployment:execute:team');
+    await grant('Engineering Manager', 'billing:read:team');
+    await grant('Engineering Manager', 'settings:update:team');
 
-    // CTO - Full access
+    // ========== CTO ==========
     await grant('CTO', 'user:delete:global');
-    await grant('CTO', 'infrastructure:read:global');
-    await grant('CTO', 'infrastructure:manage:global');
-    await grant('CTO', 'billing:read:global');
-    await grant('CTO', 'billing:manage:global');
-    await grant('CTO', 'settings:read:global');
-    await grant('CTO', 'settings:update:global');
-    await grant('CTO', 'role:create:global');
-    await grant('CTO', 'role:read:global');
-    await grant('CTO', 'role:update:global');
-    await grant('CTO', 'role:delete:global');
-    await grant('CTO', 'permission:manage:global');
+    await grant('CTO', 'project:manage:*');
+    await grant('CTO', 'repository:manage:*');
     await grant('CTO', 'deployment:execute:global');
+    await grant('CTO', 'infrastructure:manage:*');
+    await grant('CTO', 'billing:manage:global');
+    await grant('CTO', 'settings:manage:global');
+    await grant('CTO', 'role:manage:global');
+    await grant('CTO', 'permission:manage:global');
 
-    // DevOps Engineer - Infrastructure and deployment
-    await grant('DevOps Engineer', 'infrastructure:read:global');
-    await grant('DevOps Engineer', 'infrastructure:manage:global');
+    // ========== QA ENGINEER ==========
+    await grant('QA Engineer', 'user:read:team');
+    await grant('QA Engineer', 'repository:read:org');
+    await grant('QA Engineer', 'deployment:execute:team');
+    await grant('QA Engineer', 'infrastructure:manage:db:staging');
+    await grant('QA Engineer', 'report:create:team');
+
+    // ========== DESIGNER ==========
+    await grant('Designer', 'user:read:team');
+    await grant('Designer', 'design:create:own');
+    await grant('Designer', 'design:update:own');
+    await grant('Designer', 'design:create:team');
+    await grant('Designer', 'design:update:team');
+    await grant('Designer', 'document:create:own');
+    await grant('Designer', 'document:update:own');
+    await grant('Designer', 'document:create:team');
+    await grant('Designer', 'document:update:team');
+
+    // ========== DESIGN LEAD ==========
+    await grant('Design Lead', 'design:delete:*');
+    await grant('Design Lead', 'document:delete:*');
+
+    // ========== PROJECT MANAGER ==========
+    await grant('Project Manager', 'user:read:team');
+    await grant('Project Manager', 'project:update:project:backend');
+    await grant('Project Manager', 'project:update:project:frontend');
+    await grant('Project Manager', 'project:update:project:devops');
+    await grant('Project Manager', 'report:create:org');
+    await grant('Project Manager', 'report:read:org');
+    await grant('Project Manager', 'billing:read:org');
+    await grant('Project Manager', 'document:read:team');
+    await grant('Project Manager', 'document:create:team');
+    await grant('Project Manager', 'document:update:team');
+
+    // ========== DEVOPS ENGINEER ==========
+    await grant('DevOps Engineer', 'infrastructure:manage:db:production');
+    await grant('DevOps Engineer', 'infrastructure:manage:db:staging');
     await grant('DevOps Engineer', 'deployment:execute:global');
+    await grant('DevOps Engineer', 'settings:update:team');
 
-    // Designer - Design assets
-    await grant('Designer', 'design:create:global');
-    await grant('Designer', 'design:update:global');
-
-    // Design Lead - Design management
-    await grant('Design Lead', 'design:delete:global');
-
-    // Project Manager - Project coordination
-    await grant('Project Manager', 'project:create:global');
-    await grant('Project Manager', 'project:update:global');
-    await grant('Project Manager', 'report:create:global');
-
-    // QA Engineer - Testing and staging
-    await grant('QA Engineer', 'repository:read:global');
+    // ========== HR MANAGER ==========
+    await grant('HR Manager', 'user:create:global');
+    await grant('HR Manager', 'user:read:org');
+    await grant('HR Manager', 'user:update:team');
+    await grant('HR Manager', 'analytics:read:org');
+    await grant('HR Manager', 'settings:read:org');
   }
 
   private async createUsers(roles: Record<string, Role>): Promise<number> {
+    /**
+     * Creates realistic test users with varied roles
+     * for comprehensive testing of permission hierarchies
+     */
+    const usersToCreate = [
+      {
+        name: 'Juan García',
+        email: 'juan.garcia@company.com',
+        role: 'Developer',
+        description: 'Backend developer working on core services',
+      },
+      {
+        name: 'María López',
+        email: 'maria.lopez@company.com',
+        role: 'Tech Lead',
+        description: 'Technical lead overseeing the backend team',
+      },
+      {
+        name: 'Carlos Rodríguez',
+        email: 'carlos.rodriguez@company.com',
+        role: 'CTO',
+        description: 'Chief Technology Officer',
+      },
+      {
+        name: 'Ana Martínez',
+        email: 'ana.martinez@company.com',
+        role: 'Project Manager',
+        description: 'Project manager coordinating teams',
+      },
+      {
+        name: 'Luis Fernández',
+        email: 'luis.fernandez@company.com',
+        role: 'QA Engineer',
+        description: 'QA engineer ensuring product quality',
+      },
+      {
+        name: 'Sofía González',
+        email: 'sofia.gonzalez@company.com',
+        role: 'Senior Developer',
+        description: 'Senior developer with deployment rights',
+      },
+      {
+        name: 'Pedro Jiménez',
+        email: 'pedro.jimenez@company.com',
+        role: 'DevOps Engineer',
+        description: 'DevOps engineer managing infrastructure',
+      },
+      {
+        name: 'Laura Sánchez',
+        email: 'laura.sanchez@company.com',
+        role: 'Designer',
+        description: 'UI/UX designer creating design assets',
+      },
+      {
+        name: 'Roberto Díaz',
+        email: 'roberto.diaz@company.com',
+        role: 'Junior Developer',
+        description: 'Junior developer learning the ropes',
+      },
+      {
+        name: 'Elena Moreno',
+        email: 'elena.moreno@company.com',
+        role: 'Engineering Manager',
+        description: 'Engineering manager overseeing multiple teams',
+      },
+      {
+        name: 'Miguel Ruiz',
+        email: 'miguel.ruiz@company.com',
+        role: 'HR Manager',
+        description: 'HR manager handling recruitment and personnel',
+      },
+      {
+        name: 'Isabel Vargas',
+        email: 'isabel.vargas@company.com',
+        role: 'Viewer',
+        description: 'Stakeholder with read-only access',
+      },
+    ];
+
     let count = 0;
-    const roleNames = Object.keys(roles);
 
-    for (const roleName of roleNames) {
-      const email = `${roleName.toLowerCase().replace(/ /g, '.')}@example.com`;
-      const name = `${roleName} User`;
-
+    for (const userDef of usersToCreate) {
       // Create user
       const user = await this.createUser.execute({
-        name,
-        email,
+        name: userDef.name,
+        email: userDef.email,
       });
 
       // Assign role
-      await this.assignRoleToUser.execute({
-        userId: user.getId().toString(),
-        roleId: roles[roleName].getId().toString(),
-      });
-
-      count++;
+      const role = roles[userDef.role];
+      if (role) {
+        await this.assignRoleToUser.execute({
+          userId: user.getId().toString(),
+          roleId: role.getId().toString(),
+        });
+        count++;
+      }
     }
 
     return count;
