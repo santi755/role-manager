@@ -1,13 +1,34 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue'
 import type { TargetScopeMode, ScopeLevel, CreatePermissionDto, Permission } from '../types/permission'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useVModel } from '@vueuse/core'
 
 const props = defineProps<{
-  isOpen: boolean
+  open: boolean
   permissionToEdit?: Permission | null
 }>()
 
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits(['update:open', 'close', 'saved'])
+
+const isOpen = useVModel(props, 'open', emit)
 
 const resourceType = ref('')
 const action = ref('')
@@ -149,7 +170,7 @@ const submitPermission = async () => {
 
     const result = await response.json()
     emit('saved', result)
-    emit('close')
+    isOpen.value = false
     resetForm()
   } catch (err) {
     console.error('Error saving permission:', err)
@@ -160,410 +181,165 @@ const submitPermission = async () => {
 }
 
 watch(
-  () => props.isOpen,
-  (isOpen) => {
-    if (isOpen) {
+  isOpen,
+  (val) => {
+    if (val) {
       if (props.permissionToEdit) {
         populateForm(props.permissionToEdit)
       } else {
         resetForm()
       }
+    } else {
+      emit('close')
     }
   },
 )
 </script>
 
 <template>
-  <div v-if="isOpen" class="modal-backdrop" @click.self="$emit('close')">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 class="modal-title">{{ permissionToEdit ? 'Edit Permission' : 'Create Permission' }}</h2>
-        <button @click="$emit('close')" class="btn btn-ghost btn-icon">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
+  <Dialog v-model:open="isOpen">
+    <DialogContent class="sm:max-w-[600px] gap-6">
+      <DialogHeader>
+        <DialogTitle>{{ permissionToEdit ? 'Edit Permission' : 'Create Permission' }}</DialogTitle>
+        <DialogDescription>
+          Configure the permission parameters below.
+        </DialogDescription>
+      </DialogHeader>
 
-      <div class="modal-body">
-        <div v-if="error" class="error-message">
+      <div class="grid gap-6 p-4 overflow-y-auto">
+        <div v-if="error" class="bg-destructive/10 border border-destructive/20 text-destructive text-sm p-3 rounded-md">
           {{ error }}
         </div>
 
-        <div v-if="permissionPreview" class="preview-badge">
-          Preview: <span class="preview-text">{{ permissionPreview }}</span>
+        <div v-if="permissionPreview" class="bg-[var(--color-background-secondary)] p-4 rounded-lg flex items-center justify-between text-sm border border-[var(--color-border)]">
+          <span class="text-[var(--color-text-secondary)] font-medium">Preview:</span>
+          <span class="font-mono font-medium text-[var(--color-primary-light)] bg-[var(--color-surface)] px-3 py-1.5 rounded border border-[var(--color-border)] shadow-sm">{{ permissionPreview }}</span>
         </div>
 
-        <div class="form-group">
-          <label for="action" class="form-label">Action</label>
-          <select
-            id="action"
-            v-model="action"
-            class="input"
-            :disabled="isSubmitting"
-          >
-            <option value="" disabled>Select an action</option>
-            <option v-for="opt in availableActions" :key="opt" :value="opt">
-              {{ opt }}
-            </option>
-          </select>
-          <p class="form-hint">Operation to perform</p>
-        </div>
-
-        <div class="form-group">
-          <label for="resource-type" class="form-label">Resource Type</label>
-          <select
-            id="resource-type"
-            v-model="resourceType"
-            class="input"
-            :disabled="isSubmitting"
-          >
-            <option value="" disabled>Select a resource type</option>
-            <option v-for="opt in availableResourceTypes" :key="opt" :value="opt">
-              {{ opt }}
-            </option>
-          </select>
-          <p class="form-hint">The type of resource this permission applies to</p>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Target / Scope</label>
-          <div class="radio-group">
-            <label class="radio-option">
-              <input
-                type="radio"
-                v-model="targetScopeMode"
-                value="specific"
-                :disabled="isSubmitting"
-              />
-              <span>Specific Target</span>
-            </label>
-            <label class="radio-option">
-              <input
-                type="radio"
-                v-model="targetScopeMode"
-                value="wildcard"
-                :disabled="isSubmitting"
-              />
-              <span>Wildcard (all resources)</span>
-            </label>
-            <label class="radio-option">
-              <input
-                type="radio"
-                v-model="targetScopeMode"
-                value="scope"
-                :disabled="isSubmitting"
-              />
-              <span>Dynamic Scope</span>
-            </label>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <Label for="action">Action</Label>
+            <Select v-model="action" :disabled="isSubmitting">
+              <SelectTrigger id="action">
+                <SelectValue placeholder="Select an action" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in availableActions" :key="opt" :value="opt">
+                  {{ opt }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div class="space-y-2">
+            <Label for="resource-type">Resource Type</Label>
+            <Select v-model="resourceType" :disabled="isSubmitting">
+              <SelectTrigger id="resource-type">
+                <SelectValue placeholder="Select a resource type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in availableResourceTypes" :key="opt" :value="opt">
+                  {{ opt }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <!-- Specific Target Input -->
-        <div v-if="targetScopeMode === 'specific'" class="form-group">
-          <label for="target-id" class="form-label">Target ID</label>
-          <input
+        <div class="space-y-3">
+          <Label>Target / Scope</Label>
+          <div class="grid grid-cols-3 gap-1 bg-[var(--color-surface)] p-1 rounded-lg border border-[var(--color-border)]">
+            <button
+              type="button"
+              @click="targetScopeMode = 'specific'"
+              :disabled="isSubmitting"
+              class="flex items-center justify-center py-1.5 text-sm font-medium rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+              :class="
+                targetScopeMode === 'specific'
+                  ? 'bg-[var(--color-background-elevated)] text-[var(--color-text-primary)] shadow-sm border border-[var(--color-border)]'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-background-elevated)]'
+              "
+            >
+              Specific
+            </button>
+            <button
+              type="button"
+              @click="targetScopeMode = 'wildcard'"
+              :disabled="isSubmitting"
+              class="flex items-center justify-center py-1.5 text-sm font-medium rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+              :class="
+                targetScopeMode === 'wildcard'
+                  ? 'bg-[var(--color-background-elevated)] text-[var(--color-text-primary)] shadow-sm border border-[var(--color-border)]'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-background-elevated)]'
+              "
+            >
+              Wildcard
+            </button>
+            <button
+              type="button"
+              @click="targetScopeMode = 'scope'"
+              :disabled="isSubmitting"
+              class="flex items-center justify-center py-1.5 text-sm font-medium rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2"
+              :class="
+                targetScopeMode === 'scope'
+                  ? 'bg-[var(--color-background-elevated)] text-[var(--color-text-primary)] shadow-sm border border-[var(--color-border)]'
+                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-background-elevated)]'
+              "
+            >
+              Dynamic
+            </button>
+          </div>
+        </div>
+
+        <div v-if="targetScopeMode === 'specific'" class="space-y-2 animate-in fade-in slide-in-from-top-2">
+          <Label for="target-id">Target ID</Label>
+          <Input
             id="target-id"
             v-model="targetId"
-            type="text"
-            class="input"
             placeholder="e.g., project:123, doc:abc"
             :disabled="isSubmitting"
           />
-          <p class="form-hint">Specific resource identifier</p>
         </div>
 
-        <!-- Scope Selector -->
-        <div v-if="targetScopeMode === 'scope'" class="form-group">
-          <label for="scope" class="form-label">Scope Level</label>
-          <select id="scope" v-model="scope" class="input" :disabled="isSubmitting">
-            <option v-for="level in scopeLevels" :key="level.value" :value="level.value">
-              {{ level.label }}
-            </option>
-          </select>
-          <p class="form-hint">Permission resolved at runtime based on user context</p>
+        <div v-if="targetScopeMode === 'scope'" class="space-y-2 animate-in fade-in slide-in-from-top-2">
+          <Label for="scope">Scope Level</Label>
+          <Select v-model="scope" :disabled="isSubmitting">
+            <SelectTrigger id="scope">
+              <SelectValue placeholder="Select scope level" />
+            </SelectTrigger>
+            <SelectContent>
+               <SelectItem v-for="level in scopeLevels" :key="level.value" :value="level.value">
+                 {{ level.label }}
+               </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <!-- Wildcard Info -->
-        <div v-if="targetScopeMode === 'wildcard'" class="info-box">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-          <span>This permission will apply to all resources of this type</span>
+        <div v-if="targetScopeMode === 'wildcard'" class="flex items-center gap-3 p-3 bg-blue-500/10 text-blue-500 rounded-md animate-in fade-in slide-in-from-top-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <span class="text-sm">Applies to all resources of this type.</span>
         </div>
 
-        <div class="form-group">
-          <label for="description" class="form-label">Description</label>
+        <div class="space-y-2">
+          <Label for="description">Description (Optional)</Label>
           <textarea
             id="description"
             v-model="description"
-            class="input textarea"
-            placeholder="Optional description of this permission"
-            rows="3"
+            class="flex min-h-[80px] w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder="Describe this permission..."
             :disabled="isSubmitting"
           ></textarea>
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button @click="$emit('close')" class="btn btn-secondary" :disabled="isSubmitting">
+      <DialogFooter>
+        <Button variant="outline" @click="isOpen = false" :disabled="isSubmitting">
           Cancel
-        </button>
-        <button @click="submitPermission" class="btn btn-primary" :disabled="isSubmitting">
+        </Button>
+        <Button @click="submitPermission" :disabled="isSubmitting">
           <span v-if="isSubmitting">Saving...</span>
-          <span v-else>{{ permissionToEdit ? 'Update' : 'Create' }} Permission</span>
-        </button>
-      </div>
-    </div>
-  </div>
+          <span v-else>{{ permissionToEdit ? 'Update' : 'Create' }}</span>
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
-
-<style scoped>
-/* Reuse existing styles plus any new ones if needed. 
-   Assuming global styles or scoped styles from previous version flow through.
-   I'll include the CSS from the previous file to be safe.
-*/
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-  backdrop-filter: blur(4px);
-}
-
-.modal {
-  width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  background-color: var(--color-background-elevated);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  padding: var(--space-4) var(--space-6);
-  border-bottom: 1px solid var(--color-border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.modal-body {
-  padding: var(--space-6);
-  flex: 1;
-  overflow-y: auto;
-}
-
-.modal-footer {
-  padding: var(--space-4) var(--space-6);
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  background-color: var(--color-surface-alt);
-  border-bottom-left-radius: var(--radius-lg);
-  border-bottom-right-radius: var(--radius-lg);
-}
-
-.form-group {
-  margin-bottom: var(--space-5);
-}
-
-.form-label {
-  display: block;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-2);
-}
-
-.form-hint {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  margin-top: var(--space-2);
-}
-
-.input {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-  background-color: var(--color-surface);
-  transition: all var(--transition-base);
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.textarea {
-  resize: vertical;
-  min-height: 80px;
-  font-family: var(--font-family-base);
-}
-
-.error-message {
-  padding: var(--space-3) var(--space-4);
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid var(--color-error);
-  border-radius: var(--radius-md);
-  color: var(--color-error-light);
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--space-4);
-}
-
-.preview-badge {
-  padding: var(--space-3) var(--space-4);
-  background-color: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--space-4);
-  color: var(--color-text-secondary);
-}
-
-.preview-text {
-  font-family: var(--font-family-mono);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-primary);
-}
-
-.radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.radio-option {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.radio-option:hover {
-  background-color: var(--color-surface-hover);
-  border-color: var(--color-primary);
-}
-
-.radio-option input[type='radio'] {
-  cursor: pointer;
-}
-
-.radio-option span {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-}
-
-.info-box {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  background-color: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-.info-box svg {
-  flex-shrink: 0;
-  color: var(--color-primary);
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  border: none;
-  transition: all var(--transition-base);
-}
-
-.btn-primary {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--color-primary-dark);
-}
-
-.btn-secondary {
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: var(--color-surface-hover);
-}
-
-.btn-ghost {
-  background-color: transparent;
-  color: var(--color-text-secondary);
-}
-
-.btn-ghost:hover {
-  background-color: var(--color-surface-hover);
-  color: var(--color-text-primary);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-icon {
-  padding: var(--space-2);
-}
-</style>

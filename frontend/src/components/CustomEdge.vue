@@ -71,7 +71,7 @@ const handleDelete = () => {
     />
 
     <!-- Invisible wider path for easier hovering -->
-    <path :d="path" fill="none" stroke="transparent" stroke-width="20" style="cursor: pointer" />
+    <path :d="path" fill="none" stroke="transparent" stroke-width="20" class="cursor-pointer" />
 
     <!-- Delete button -->
     <EdgeLabelRenderer>

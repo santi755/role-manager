@@ -81,14 +81,13 @@ const onSaved = () => {
     </div>
 
     <PermissionModal
-      :is-open="isModalOpen"
+      v-model:open="isModalOpen"
       :permission-to-edit="editingPermission"
-      @close="isModalOpen = false"
       @saved="onSaved"
     />
 
     <ConfirmDialog
-      :is-open="isConfirmOpen"
+      v-model:open="isConfirmOpen"
       title="Delete Permission"
       :message="`Are you sure you want to delete permission '${permissionToDelete?.resource_type}:${permissionToDelete?.action}'? This action cannot be undone.`"
       confirm-label="Delete"

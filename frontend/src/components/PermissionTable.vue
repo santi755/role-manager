@@ -115,20 +115,20 @@ defineExpose({ refresh: fetchPermissions })
 </script>
 
 <template>
-  <div class="permission-table-container">
-    <div class="controls">
+  <div class="permission-table-container bg-[var(--color-surface)] rounded-[var(--radius-lg)] shadow-[var(--shadow-md)] overflow-hidden border border-[var(--color-border)] h-full flex flex-col">
+    <div class="controls p-4 border-b border-[var(--color-border)] bg-[var(--color-surface)] flex-shrink-0">
       <input 
         v-model="filter" 
         placeholder="Search permissions..." 
-        class="search-input"
+        class="search-input px-2 py-1 border border-[var(--color-border)] rounded-md w-72 text-sm bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]"
       />
     </div>
 
-    <div class="table-wrapper">
-      <table class="permission-table">
+    <div class="table-wrapper overflow-auto flex-1">
+      <table class="permission-table w-full border-collapse text-left">
         <thead>
           <tr v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-            <th v-for="header in headerGroup.headers" :key="header.id" @click="header.column.getToggleSortingHandler()?.($event)">
+            <th v-for="header in headerGroup.headers" :key="header.id" @click="header.column.getToggleSortingHandler()?.($event)" class="bg-[var(--color-background)] px-6 py-3 font-semibold text-xs uppercase tracking-[0.05em] text-[var(--color-text-secondary)] border-b border-[var(--color-border)] cursor-pointer whitespace-nowrap sticky top-0 z-10">
               <template v-if="!header.isPlaceholder">
                 <div v-if="header.column.getIsGrouped()">
                   <!-- Hide header for grouped column if desired, or keep it. 
@@ -151,10 +151,10 @@ defineExpose({ refresh: fetchPermissions })
         </thead>
         <tbody>
            <tr v-if="loading">
-             <td colspan="5" style="text-align:center; padding: 20px;">Loading...</td>
+             <td colspan="5" class="text-center p-5">Loading...</td>
            </tr>
            <tr v-else-if="permissions.length === 0">
-             <td colspan="5" style="text-align:center; padding: 20px;">No permissions found.</td>
+             <td colspan="5" class="text-center p-5">No permissions found.</td>
            </tr>
            <template v-else v-for="row in table.getRowModel().rows" :key="row.id">
              <!-- Group Header Row -->
@@ -179,14 +179,14 @@ defineExpose({ refresh: fetchPermissions })
              
              <!-- Normal Row (only show if not grouped, or if it's a leaf) -->
              <tr v-else class="permission-row">
-               <td v-for="cell in row.getVisibleCells()" :key="cell.id">
+               <td v-for="cell in row.getVisibleCells()" :key="cell.id" class="px-6 py-4 border-b border-[var(--color-border)] text-[var(--color-text-primary)] text-sm">
                  <template v-if="cell.column.getIsGrouped()">
                    <!-- Empty cell for the grouped column in leaf rows (or we can hide the column entirely in leaf view) -->
                  </template>
                  <template v-else-if="cell.column.id === 'actions'">
                     <div class="action-buttons">
-                      <button @click="$emit('edit', row.original)" class="btn-sm btn-edit">Edit</button>
-                      <button @click="$emit('delete', row.original)" class="btn-sm btn-delete">Delete</button>
+                      <button @click="$emit('edit', row.original)" class="btn-sm btn-edit inline-flex items-center px-2 py-1 rounded-md text-xs border transition">Edit</button>
+                      <button @click="$emit('delete', row.original)" class="btn-sm btn-delete inline-flex items-center px-2 py-1 rounded-md text-xs border transition">Delete</button>
                     </div>
                  </template>
                  <template v-else>

@@ -39,6 +39,15 @@ const getActionColor = (action: string): string => {
   return '#6b7280'
 }
 
+const getActionClasses = (action: string) => {
+  const actionLower = action.toLowerCase()
+  if (actionLower === 'create') return { badge: 'bg-green-100 border-green-500', text: 'text-green-600' }
+  if (actionLower === 'read') return { badge: 'bg-blue-100 border-blue-500', text: 'text-blue-600' }
+  if (actionLower === 'update') return { badge: 'bg-amber-100 border-amber-500', text: 'text-amber-600' }
+  if (actionLower === 'delete') return { badge: 'bg-red-100 border-red-500', text: 'text-red-600' }
+  return { badge: 'bg-gray-100 border-gray-400', text: 'text-gray-600' }
+}
+
 const handleBackdropClick = (e: MouseEvent) => {
   if (e.target === e.currentTarget) {
     emit('close')
@@ -60,8 +69,8 @@ const handleBackdropClick = (e: MouseEvent) => {
       <div v-if="permission" class="modal-body">
         <!-- Header with action badge -->
         <div class="header-section">
-          <div class="action-badge-large" :style="{ backgroundColor: getActionColor(permission.action) + '20', borderColor: getActionColor(permission.action) }">
-            <span :style="{ color: getActionColor(permission.action) }">
+          <div class="action-badge-large w-16 h-16 rounded-lg border-2 inline-flex items-center justify-center mb-4 text-lg font-bold" :class="getActionClasses(permission.action).badge">
+            <span :class="['font-semibold', getActionClasses(permission.action).text]">
               {{ permission.action.toUpperCase() }}
             </span>
           </div>

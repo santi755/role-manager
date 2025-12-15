@@ -7,6 +7,10 @@
    CSS VARIABLES - DESIGN TOKENS
    ============================================ */
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* Colors - Dark Theme */
   --color-background: #0a0a0a;
